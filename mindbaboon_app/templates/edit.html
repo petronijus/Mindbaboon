@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Edit Task</h2>
+<form method="POST" action="{{ url_for('edit_task', task_id=task['id']) }}">
+  <label for="title">Title:</label><br>
+  <input type="text" name="title" id="title" value="{{ task['title'] }}" required><br>
+
+  <label for="description">Description:</label><br>
+  <textarea name="description" id="description">{{ task['description'] }}</textarea><br>
+
+  <label for="completed">Completed:</label>
+  <input type="checkbox" name="completed" id="completed" {% if task['completed'] == 1 %}checked{% endif %}><br>
+
+  <button type="submit">Save Changes</button>
+</form>
+{% endblock %}

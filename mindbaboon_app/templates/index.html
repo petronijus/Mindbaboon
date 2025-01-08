@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Your Tasks</h2>
+
+{% if tasks %}
+  <ul>
+    {% for task in tasks %}
+      <li>
+        <strong>{{ task.title }}</strong>
+        {% if task.completed == 1 %}<em> (Completed)</em>{% endif %}
+        <p>{{ task.description }}</p>
+
+        <a href="{{ url_for('edit_task', task_id=task['id']) }}">Edit</a>
+        <!-- Delete form -->
+        <form action="{{ url_for('delete_task', task_id=task['id']) }}" method="POST" style="display:inline">
+          <button type="submit">Delete</button>
+        </form>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No tasks yet. <a href="{{ url_for('add_task') }}">Add one</a>.</p>
+{% endif %}
+{% endblock %}
