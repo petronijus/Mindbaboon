@@ -1,27 +1,41 @@
+/* BODY - Use "crete", serif with weight 400 */
 body {
-    font-family: Arial, sans-serif;
+    font-family: "crete", serif;
+    font-weight: 400;
     margin: 20px;
     padding: 0;
     background: #f8f9fa;
   }
   
+  /* HEADERS (h1-h6) - Also use "crete", serif with weight 400 */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "crete", serif;
+    font-weight: 400;
+    margin-top: 0;
+    margin-bottom: 0.5em;
+  }
+  
+  /* HEADER & FOOTER styling */
   header, footer {
     background: #343a40;
     color: white;
     padding: 10px;
   }
   
+  /* MAIN content container */
   main {
     background: #ffffff;
     padding: 20px;
     margin-top: 10px;
   }
   
+  /* Unordered List styling */
   ul {
     list-style-type: none;
     padding: 0;
   }
   
+  /* List Item styling */
   li {
     background: #e9ecef;
     margin-bottom: 10px;
@@ -29,15 +43,24 @@ body {
     border-radius: 4px;
   }
   
+  /* Form label styling */
   label {
-    font-weight: bold;
+    font-weight: 700; /* if you want labels bolder */
   }
   
+  /* Button styling */
   button {
     margin-top: 10px;
   }
   
+  /* Links */
   a {
     margin-right: 10px;
+    color: #007bff;
+    text-decoration: none;
+  }
+  
+  a:hover {
+    text-decoration: underline;
   }
   
