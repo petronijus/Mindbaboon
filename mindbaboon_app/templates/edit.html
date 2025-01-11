@@ -1,16 +1,144 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Edit Task</h2>
-<form method="POST" action="{{ url_for('edit_task', task_id=task['id']) }}">
-  <label for="title">Title:</label><br>
-  <input type="text" name="title" id="title" value="{{ task['title'] }}" required><br>
+<div class="add-goal-page">
+  <div class="goal-form-container">
+    <!-- 
+      The route is /edit/<goal_id>, so we submit back to edit_goal.
+      Make sure to pass the correct goal_id in the form action if needed
+      or rely on the route param. For example:
+      action="{{ url_for('edit_goal', goal_id=goal['id']) }}"
+    -->
+    <form method="POST" action="{{ url_for('edit_goal', goal_id=goal['id']) }}">
+      
+      <!-- Large heading-style input -->
+      <div class="form-group-big">
+        <input
+          type="text"
+          id="goal_name"
+          name="goal_name"
+          class="goal-header-input"
+          placeholder="Tell me your goal."
+          onfocus="this.placeholder=''"
+          onblur="this.placeholder='Tell me your goal.'"
+          value="{{ goal['goal_name'] }}"
+          required
+        >
+        <hr class="header-divider">
+      </div>
 
-  <label for="description">Description:</label><br>
-  <textarea name="description" id="description">{{ task['description'] }}</textarea><br>
+      <!-- Single-sentence description -->
+      <div class="form-group">
+        <label for="goal_description" class="label-floating">Explain in one sentence.</label>
+        <input 
+          type="text"
+          id="goal_description"
+          name="goal_description"
+          maxlength="200"
+          placeholder="200 chars"
+          value="{{ goal['goal_description'] }}"
+          required
+        >
+      </div>
 
-  <label for="completed">Completed:</label>
-  <input type="checkbox" name="completed" id="completed" {% if task['completed'] == 1 %}checked{% endif %}><br>
+      <!-- Time Span Options -->
+      <div class="form-inline-group">
+        <span class="form-label">time span</span>
+        <label>
+          <input 
+            type="radio" 
+            name="time_span" 
+            value="weeks" 
+            {% if goal['time_span'] == 'weeks' %}checked{% endif %}
+          > weeks
+        </label>
+        <label>
+          <input 
+            type="radio" 
+            name="time_span" 
+            value="months"
+            {% if goal['time_span'] == 'months' %}checked{% endif %}
+          > months
+        </label>
+        <label>
+          <input 
+            type="radio" 
+            name="time_span" 
+            value="specific_date"
+            {% if goal['time_span'] == 'specific_date' %}checked{% endif %}
+          > date
+        </label>
+      </div>
 
-  <button type="submit">Save Changes</button>
-</form>
+      <!-- Iteration Options -->
+      <div class="form-inline-group">
+        <span class="form-label">iteration</span>
+        <label>
+          <input
+            type="radio"
+            name="iteration"
+            value="week"
+            {% if goal['iteration'] == 'week' %}checked{% endif %}
+          > week
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="iteration"
+            value="2 weeks"
+            {% if goal['iteration'] == '2 weeks' %}checked{% endif %}
+          > 2 weeks
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="iteration"
+            value="month"
+            {% if goal['iteration'] == 'month' %}checked{% endif %}
+          > month
+        </label>
+      </div>
+
+      <!-- Next Step -->
+      <div class="form-group">
+        <label for="next_step_description" class="label-floating">
+          Next steps: What needs to be done till next iteration?
+        </label>
+        <textarea
+          id="next_step_description"
+          name="next_step_description"
+          maxlength="64"
+          placeholder="64 chars"
+        >{{ goal['next_step_description'] }}</textarea>
+      </div>
+
+      <!-- Reward -->
+      <div class="form-group">
+        <label for="reward" class="label-floating">How do I reward myself.</label>
+        <input
+          type="text"
+          id="reward"
+          name="reward"
+          maxlength="64"
+          placeholder="64 chars"
+          value="{{ goal['reward'] }}"
+        >
+      </div>
+
+      <!-- Completed Checkbox (optional if you want to toggle completion here) -->
+      <div class="form-group">
+        <label>
+          <input
+            type="checkbox"
+            name="completed"
+            {% if goal['completed'] == 1 %}checked{% endif %}
+          >
+          Mark as completed
+        </label>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="add-goal-button">Save Goal</button>
+    </form>
+  </div>
+</div>
 {% endblock %}

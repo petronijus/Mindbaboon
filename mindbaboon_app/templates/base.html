@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <title>{{ title if title else "Mindbaboon" }}</title>
 
+  <!-- Adobe Fonts (replace xxxxxx with your Kit ID) -->
   <link rel="stylesheet" href="https://use.typekit.net/enw8aoe.css">
+
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -13,7 +15,7 @@
     <h1>Mindbaboon</h1>
     <nav>
       <a href="{{ url_for('index') }}">Home</a> |
-      <a href="{{ url_for('add_task') }}">Add New Task</a>
+      <a href="{{ url_for('add_goal') }}">Add New Goal</a>
     </nav>
   </header>
 
@@ -27,3 +29,4 @@
 
 </body>
 </html>
+

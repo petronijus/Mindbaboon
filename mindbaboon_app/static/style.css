@@ -1,66 +1,121 @@
-/* BODY - Use "crete", serif with weight 400 */
-body {
-    font-family: "crete", serif;
-    font-weight: 400;
-    margin: 20px;
-    padding: 0;
-    background: #f8f9fa;
-  }
-  
-  /* HEADERS (h1-h6) - Also use "crete", serif with weight 400 */
-  h1, h2, h3, h4, h5, h6 {
-    font-family: "crete", serif;
-    font-weight: 400;
-    margin-top: 0;
-    margin-bottom: 0.5em;
-  }
-  
-  /* HEADER & FOOTER styling */
-  header, footer {
-    background: #343a40;
-    color: white;
-    padding: 10px;
-  }
-  
-  /* MAIN content container */
-  main {
-    background: #ffffff;
-    padding: 20px;
-    margin-top: 10px;
-  }
-  
-  /* Unordered List styling */
-  ul {
-    list-style-type: none;
-    padding: 0;
-  }
-  
-  /* List Item styling */
-  li {
-    background: #e9ecef;
-    margin-bottom: 10px;
-    padding: 10px;
-    border-radius: 4px;
-  }
-  
-  /* Form label styling */
-  label {
-    font-weight: 700; /* if you want labels bolder */
-  }
-  
-  /* Button styling */
-  button {
-    margin-top: 10px;
-  }
-  
-  /* Links */
-  a {
-    margin-right: 10px;
-    color: #007bff;
-    text-decoration: none;
-  }
-  
-  a:hover {
-    text-decoration: underline;
-  }
-  
+/* Overall page container */
+.add-goal-page {
+  margin: 0 auto;
+  max-width: 800px;  /* Adjust to your preference */
+  padding: 40px 20px;
+}
+
+/* Main form container */
+.goal-form-container {
+  display: flex;
+  flex-direction: column;
+}
+
+/* BIG input that replaces the heading */
+.form-group-big {
+  margin-bottom: 30px;
+  position: relative; /* so we can position the hr or other elements if needed */
+}
+
+/* This is the large text input that looks like a heading */
+.goal-header-input {
+  font-family: "crete", serif;
+  font-weight: 400;
+  font-size: 2.5rem;
+  color: #999; /* Light gray to mimic the design */
+  border: none;
+  background: transparent;
+  width: 100%;
+  outline: none;
+  padding: 0;
+  margin: 0 0 10px 0; /* space below before the hr */
+}
+
+/* Thin horizontal line under heading */
+.header-divider {
+  border: none;
+  border-bottom: 1px solid #555; /* a mid-gray line */
+  margin-bottom: 30px;
+}
+
+/* Form groups for single-line inputs */
+.form-group {
+  margin-bottom: 25px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Subtle label. We can make it “float” with absolute positioning or keep it simple */
+.label-floating {
+  font-family: "crete", serif;
+  font-size: 1rem;
+  color: #999; /* subdued label color */
+  margin-bottom: 5px;
+}
+
+/* Inputs and textareas */
+.form-group input[type="text"],
+.form-group textarea {
+  font-family: "crete", serif;
+  font-weight: 400;
+  font-size: 1.1rem;
+  color: #333;
+  border: none;
+  border-bottom: 1px solid #555;
+  background: transparent;
+  outline: none;
+  padding: 5px 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Placeholders in a lighter color */
+::placeholder {
+  color: #ccc;
+}
+
+/* Inline group for radio selections: Time Span, Iteration, etc. */
+.form-inline-group {
+  margin-bottom: 25px;
+  display: flex;
+  align-items: center;
+}
+
+/* Label for the group (“time span,” “iteration”) */
+.form-inline-group .form-label {
+  font-family: "crete", serif;
+  font-size: 1rem;
+  color: #999;
+  margin-right: 20px;
+}
+
+/* Each radio label */
+.form-inline-group label {
+  margin-right: 20px;
+  font-family: "crete", serif;
+  font-size: 1rem;
+  color: #999;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.form-inline-group label input[type="radio"] {
+  margin-right: 5px;
+}
+
+/* The “Save Goal” button */
+.add-goal-button {
+  font-family: "crete", serif;
+  font-weight: 400;
+  background-color: #333;
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.add-goal-button:hover {
+  background-color: #555;
+}

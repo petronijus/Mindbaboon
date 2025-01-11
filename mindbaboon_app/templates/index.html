@@ -1,24 +1,38 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Your Tasks</h2>
+<h2>Your Goals</h2>
 
-{% if tasks %}
+{% if goals %}
   <ul>
-    {% for task in tasks %}
+    {% for goal in goals %}
       <li>
-        <strong>{{ task.title }}</strong>
-        {% if task.completed == 1 %}<em> (Completed)</em>{% endif %}
-        <p>{{ task.description }}</p>
+        <!-- Goal Name -->
+        <strong>{{ goal.goal_name }}</strong>
+        <!-- (Completed) status -->
+        {% if goal.completed == 1 %}<em> (Completed)</em>{% endif %}
+        
+        <p>
+          <strong>Description:</strong> {{ goal.goal_description }}<br>
+          <strong>Time Span:</strong> {{ goal.time_span }}
+          {% if goal.time_span == "specific_date" %}
+            (Ends on: {{ goal.end_date }})
+          {% endif %}
+          <br>
+          <strong>Iteration:</strong> {{ goal.iteration }}<br>
+          <strong>Next Step:</strong> {{ goal.next_step_description }}<br>
+          <strong>Reward:</strong> {{ goal.reward }}
+        </p>
 
-        <a href="{{ url_for('edit_task', task_id=task['id']) }}">Edit</a>
+        <!-- Edit link -->
+        <a href="{{ url_for('edit_goal', goal_id=goal['id']) }}">Edit</a>
         <!-- Delete form -->
-        <form action="{{ url_for('delete_task', task_id=task['id']) }}" method="POST" style="display:inline">
+        <form action="{{ url_for('delete_goal', goal_id=goal['id']) }}" method="POST" style="display:inline">
           <button type="submit">Delete</button>
         </form>
       </li>
     {% endfor %}
   </ul>
 {% else %}
-  <p>No tasks yet. <a href="{{ url_for('add_task') }}">Add one</a>.</p>
+  <p>No goals yet. <a href="{{ url_for('add_goal') }}">Add one</a>.</p>
 {% endif %}
 {% endblock %}
