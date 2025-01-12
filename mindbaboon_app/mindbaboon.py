@@ -1,8 +1,20 @@
 # mindbaboon.py
 
 import sqlite3
+import random
 from flask import Flask, render_template, request, redirect, url_for
 from datetime import datetime
+
+
+# Predefined list of motivational goals or quotes
+MOTIVATIONAL_GOALS = [
+    "Push yourself, because no one else is going to do it for you.",
+    "Great things never come from comfort zones.",
+    "Dream it. Believe it. Build it.",
+    "Don't stop until you're proud.",
+    "Your limitation—it's only your imagination.",
+    "Do something today that your future self will thank you for."
+]
 
 # Import the scheduler logic
 from scheduler import (
@@ -50,7 +62,10 @@ def index():
     conn = get_db_connection()
     goals = conn.execute("SELECT * FROM goals").fetchall()
     conn.close()
-    return render_template("index.html", goals=goals)
+    # Pick a random motivational goal
+    random_goal = random.choice(MOTIVATIONAL_GOALS)
+
+    return render_template("index.html", goals=goals, motivational_goal=random_goal)
 
 @app.route("/add", methods=["GET", "POST"])
 def add_goal():

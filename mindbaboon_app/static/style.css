@@ -1,3 +1,30 @@
+/* General text styles for index.html */
+h2, p, strong, em, a {
+  font-family: "crete", serif;
+  font-weight: 400;
+  color: #333; /* Adjust color as needed */
+}
+
+/* Specific to links */
+a {
+  text-decoration: none;
+  color: #555; /* Adjust for link styling */
+}
+
+a:hover {
+  color: #999; /* Hover effect */
+}
+
+.motivational-goal {
+  font-family: "crete", serif;
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: #555;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+
 /* Overall page container */
 .add-goal-page {
   margin: 0 auto;
