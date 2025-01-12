@@ -65,9 +65,31 @@
             name="time_span" 
             value="specific_date"
             {% if goal['time_span'] == 'specific_date' %}checked{% endif %}
-          > date
+          > specific date
         </label>
       </div>
+
+      <!-- Specific Date Input -->
+      <div class="form-group" id="specific-date-container" class="{% if goal['time_span'] == 'specific_date' %}visible{% else %}hidden{% endif %}">
+        <label for="specific_date" class="label-floating">Choose a specific date:</label>
+        <input
+          type="date"
+          id="specific_date"
+          name="specific_date"
+          value="{{ goal['specific_date'] }}"
+        >
+      </div>
+
+      <script>
+        // JavaScript to toggle specific date input visibility
+        document.querySelectorAll('input[name="time_span"]').forEach(input => {
+          input.addEventListener('change', function() {
+            const specificDateContainer = document.getElementById('specific-date-container');
+            specificDateContainer.style.display = this.value === 'specific_date' ? 'block' : 'none';
+          });
+        });
+      </script>
+
 
       <!-- Iteration Options -->
       <div class="form-inline-group">

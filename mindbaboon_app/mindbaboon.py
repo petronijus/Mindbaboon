@@ -52,14 +52,13 @@ def index():
     conn.close()
     return render_template("index.html", goals=goals)
 
-# -- Add a New Goal --
 @app.route("/add", methods=["GET", "POST"])
 def add_goal():
     if request.method == "POST":
         goal_name = request.form["goal_name"]
         goal_description = request.form.get("goal_description", "")
         time_span = request.form.get("time_span", "")
-        end_date = request.form.get("end_date", "")
+        specific_date = request.form.get("specific_date") if time_span == "specific_date" else None
         iteration = request.form.get("iteration", "")
         next_step_description = request.form.get("next_step_description", "")
         reward = request.form.get("reward", "")
@@ -86,7 +85,7 @@ def add_goal():
             goal_name,
             goal_description,
             time_span,
-            end_date,
+            specific_date,
             iteration,
             next_step_description,
             reward,
@@ -107,6 +106,7 @@ def add_goal():
 
     return render_template("add.html")
 
+
 # -- Edit an Existing Goal --
 @app.route("/edit/<int:goal_id>", methods=["GET", "POST"])
 def edit_goal(goal_id):
@@ -121,7 +121,7 @@ def edit_goal(goal_id):
         goal_name = request.form["goal_name"]
         goal_description = request.form["goal_description"]
         time_span = request.form["time_span"]
-        end_date = request.form["end_date"]
+        specific_date = request.form.get("specific_date") if time_span == "specific_date" else None
         iteration = request.form["iteration"]
         next_step_description = request.form["next_step_description"]
         reward = request.form["reward"]
@@ -143,7 +143,7 @@ def edit_goal(goal_id):
             goal_name,
             goal_description,
             time_span,
-            end_date,
+            specific_date,
             iteration,
             next_step_description,
             reward,

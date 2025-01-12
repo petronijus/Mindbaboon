@@ -28,7 +28,6 @@ def get_db_connection():
     return conn
 
 def send_email(to_address, subject, body):
-    print(f"Username: {EMAIL_USERNAME}, Password: {EMAIL_PASSWORD}")
 
     """ Send an email using SMTP. """
     msg = EmailMessage()

@@ -119,3 +119,11 @@
 .add-goal-button:hover {
   background-color: #555;
 }
+
+.hidden {
+    display: none;
+}
+
+.visible {
+    display: block;
+}
