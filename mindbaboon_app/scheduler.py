@@ -5,13 +5,18 @@ from datetime import datetime, timedelta
 import smtplib
 from email.message import EmailMessage
 import sqlite3
+from dotenv import load_dotenv
+import os
 
-# If you have environment variables or a config file, you’d read them instead:
-EMAIL_SMTP_SERVER = "smtp.gmail.com"
-EMAIL_SMTP_PORT = 587
-EMAIL_USERNAME = "example@gmail.com"
-EMAIL_PASSWORD = "examplepassword"  # Use environment vars in production
-DEFAULT_TO_ADDRESS = "you@example.com"  # or read from a config
+# Load environment variables from .env
+load_dotenv()
+
+# Retrieve SMTP credentials and other configurations from environment variables
+EMAIL_SMTP_SERVER = os.getenv("EMAIL_SMTP_SERVER", "smtp.gmail.com")
+EMAIL_SMTP_PORT = int(os.getenv("EMAIL_SMTP_PORT", 587))
+EMAIL_USERNAME = os.getenv("EMAIL_USERNAME")
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
+DEFAULT_TO_ADDRESS = os.getenv("DEFAULT_TO_ADDRESS", "you@example.com")
 
 # Initialize a global BackgroundScheduler instance
 scheduler = BackgroundScheduler()
@@ -23,6 +28,8 @@ def get_db_connection():
     return conn
 
 def send_email(to_address, subject, body):
+    print(f"Username: {EMAIL_USERNAME}, Password: {EMAIL_PASSWORD}")
+
     """ Send an email using SMTP. """
     msg = EmailMessage()
     msg["From"] = EMAIL_USERNAME
@@ -68,8 +75,7 @@ def schedule_reminder(goal_id, iteration):
     """
     # Convert iteration to an interval
     if iteration == "week":
-        #interval_args = {"weeks": 1}
-        interval_args = {"seconds": 30}
+        interval_args = {"seconds": 30}  # For testing, use seconds. Replace with {"weeks": 1} in production.
     elif iteration == "2 weeks":
         interval_args = {"weeks": 2}
     elif iteration == "month":
