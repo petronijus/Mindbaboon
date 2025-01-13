@@ -4,6 +4,7 @@ import sqlite3
 import random
 from flask import Flask, render_template, request, redirect, url_for
 from datetime import datetime
+from apscheduler.schedulers.background import BackgroundScheduler
 
 
 # Predefined list of motivational goals or quotes
@@ -26,7 +27,12 @@ from scheduler import (
 app = Flask(__name__)
 
 # 1. Start APScheduler once, near app startup
-scheduler.start()
+def init_scheduler():
+    try:
+        scheduler.start()
+    except Exception as e:
+        # If scheduler is already running, just pass
+        pass
 
 # 2. Database Helpers
 def get_db_connection():
@@ -192,4 +198,5 @@ def delete_goal(goal_id):
 # 4. Run the App
 if __name__ == "__main__":
     create_tables()  # Create the DB table if missing
+    init_scheduler()  # Use the new init function
     app.run(debug=True)

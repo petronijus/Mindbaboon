@@ -3,8 +3,8 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime
 import sqlite3
-import os  # Ensure os is imported
-from email_utils import send_email  # Import the new email utility
+import os
+from email_utils import send_email  # Import the email utility
 
 # Initialize a global BackgroundScheduler instance
 scheduler = BackgroundScheduler()
@@ -31,18 +31,10 @@ def send_goal_reminder(goal_id):
     goal_name = goal["goal_name"]
     iteration = goal["iteration"]
 
-    subject = f"Mindbaboon Reminder: {goal_name}"
-    body = (
-        f"Hello,\n\n"
-        f"This is your {iteration} reminder for the goal: {goal_name}.\n"
-        f"Keep going!\n\n"
-        f"Your Mindbaboon"
-    )
-
     # Send the email using the email utility
     try:
-        send_email(os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com"), subject, body)
-        print(f"Email sent to {os.getenv('DEFAULT_TO_ADDRESS', 'example@domain.com')} with subject: '{subject}'")
+        send_email(os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com"), goal_name, iteration)
+        print(f"Email sent to {os.getenv('DEFAULT_TO_ADDRESS', 'example@domain.com')} for goal: '{goal_name}'")
     except Exception as e:
         print(f"Error sending email: {e}")
 
