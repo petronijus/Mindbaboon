@@ -1,0 +1,33 @@
+<h1>{{ goal.goal_name }}</h1>
+<p>{{ goal.goal_description }}</p>
+<p>{{ goal.next_step_description }}</p>
+
+<form method="POST">
+  <label>Step completed?</label><br>
+  <input type="radio" name="completed" value="yes" {% if request.args.get('completed') == 'yes' %}checked{% endif %}> Yes<br>
+  <input type="radio" name="completed" value="no" {% if request.args.get('completed') == 'no' %}checked{% endif %}> No<br>
+
+  {% if request.args.get('completed') == 'yes' %}
+    <p>Banana!</p>
+  {% elif request.args.get('completed') == 'no' %}
+    <p>Baboon is angry</p>
+  {% endif %}
+
+  <label>Write shortly what you did:</label><br>
+  <textarea name="description"></textarea><br>
+
+  <label>Next Step:</label><br>
+  <textarea name="next_steps">{{ goal.next_step_description }}</textarea><br>
+
+  <label>Reward:</label><br>
+  <input type="text" name="reward" value="{{ goal.reward }}"><br>
+
+  <label>Iteration Frequency:</label><br>
+  <select name="iteration">
+    <option value="week" {% if goal.iteration == 'week' %}selected{% endif %}>Week</option>
+    <option value="2 weeks" {% if goal.iteration == '2 weeks' %}selected{% endif %}>2 Weeks</option>
+    <option value="month" {% if goal.iteration == 'month' %}selected{% endif %}>Month</option>
+  </select><br>
+
+  <button type="submit">Save</button>
+</form>

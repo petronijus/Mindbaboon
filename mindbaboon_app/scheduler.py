@@ -29,14 +29,22 @@ def send_goal_reminder(goal_id):
         return
 
     goal_name = goal["goal_name"]
-    iteration = goal["iteration"]
+    next_steps = goal["next_steps"]
+    
 
     # Send the email using the email utility
     try:
-        send_email(os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com"), goal_name, iteration)
+        send_email(
+            os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com"),
+            goal_id,
+            goal_name,
+            next_steps
+        )
+
         print(f"Email sent to {os.getenv('DEFAULT_TO_ADDRESS', 'example@domain.com')} for goal: '{goal_name}'")
     except Exception as e:
         print(f"Error sending email: {e}")
+
 
 def schedule_reminder(goal_id, iteration):
     """

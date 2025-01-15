@@ -17,9 +17,10 @@ EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 
 print(f"Loaded email settings: {EMAIL_SMTP_SERVER}, {EMAIL_USERNAME}")
 
-def format_email_content(goal_name, iteration):
+
+def format_email_content(goal_name, next_steps, goal_id):
     """
-    Format the subject and body of the email for a goal.
+    Format the subject and body of the email for a goal with iteration question.
     """
     # Import quotes dynamically from mindbaboon.py
     try:
@@ -28,20 +29,26 @@ def format_email_content(goal_name, iteration):
     except ImportError:
         quote = "Stay motivated and keep pushing forward!"  # Fallback quote
 
+    iteration_url_yes = f"http://127.0.0.1:5000/iteration/{goal_id}?completed=yes"
+    iteration_url_no = f"http://127.0.0.1:5000/iteration/{goal_id}?completed=no"
+
     subject = f"Mindbaboon is watching: {goal_name}"
     body = (
         f"{quote}\n\n"
         f"Goal: {goal_name}\n"
-        f"Iteration: {iteration}\n\n"
+        f"Next Steps: {next_steps}\n\n"
+        f"Step completed? [Yes]({iteration_url_yes}) | [No]({iteration_url_no})\n\n"
         f"Keep up the great work!"
     )
     return subject, body
 
-def send_email(to_address, goal_name, iteration):
+
+
+def send_email(to_address, goal_id, goal_name, next_steps):
     """
     Send an email using SMTP.
     """
-    subject, body = format_email_content(goal_name, iteration)
+    subject, body = format_email_content(goal_name, next_steps, goal_id)
 
     msg = EmailMessage()
     msg["From"] = EMAIL_USERNAME

@@ -5,6 +5,7 @@ import random
 from flask import Flask, render_template, request, redirect, url_for
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
+from iteration import iteration_bp
 
 
 # Predefined list of motivational goals or quotes
@@ -25,6 +26,7 @@ from scheduler import (
 )
 
 app = Flask(__name__)
+app.register_blueprint(iteration_bp)
 
 # 1. Start APScheduler once, near app startup
 def init_scheduler():
@@ -50,7 +52,7 @@ def create_tables():
             time_span TEXT,
             end_date TEXT,
             iteration TEXT,
-            next_step_description TEXT,
+            next_steps TEXT,
             reward TEXT,
             completed INTEGER NOT NULL DEFAULT 0,
             created_at TIMESTAMP NOT NULL,
@@ -81,7 +83,7 @@ def add_goal():
         time_span = request.form.get("time_span", "")
         specific_date = request.form.get("specific_date") if time_span == "specific_date" else None
         iteration = request.form.get("iteration", "")
-        next_step_description = request.form.get("next_step_description", "")
+        next_steps = request.form.get("next_steps", "")
         reward = request.form.get("reward", "")
 
         now = datetime.now()  # For created_at
@@ -95,7 +97,7 @@ def add_goal():
                 time_span,
                 end_date,
                 iteration,
-                next_step_description,
+                next_steps,
                 reward,
                 completed,
                 created_at,
@@ -108,7 +110,7 @@ def add_goal():
             time_span,
             specific_date,
             iteration,
-            next_step_description,
+            next_steps,
             reward,
             0,
             now,
@@ -144,7 +146,7 @@ def edit_goal(goal_id):
         time_span = request.form["time_span"]
         specific_date = request.form.get("specific_date") if time_span == "specific_date" else None
         iteration = request.form["iteration"]
-        next_step_description = request.form["next_step_description"]
+        next_steps = request.form["next_steps"]
         reward = request.form["reward"]
         completed = 1 if request.form.get("completed") == "on" else 0
 
@@ -156,7 +158,7 @@ def edit_goal(goal_id):
                 time_span = ?,
                 end_date = ?,
                 iteration = ?,
-                next_step_description = ?,
+                next_steps = ?,
                 reward = ?,
                 completed = ?
             WHERE id = ?
@@ -166,7 +168,7 @@ def edit_goal(goal_id):
             time_span,
             specific_date,
             iteration,
-            next_step_description,
+            next_steps,
             reward,
             completed,
             goal_id
