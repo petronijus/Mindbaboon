@@ -32,10 +32,10 @@ def iteration_view(goal_id):
         """, (goal_id, completed, description, next_steps, reward, datetime.now()))
         conn.commit()
 
-        # Update the goal with new data
+        # Update the goal with new data and unpause the scheduler
         conn.execute("""
             UPDATE goals
-            SET next_steps = ?, reward = ?, iteration = ?
+            SET next_steps = ?, reward = ?, iteration = ?, is_paused = 0
             WHERE id = ?
         """, (next_steps, reward, iteration_frequency, goal_id))
         conn.commit()

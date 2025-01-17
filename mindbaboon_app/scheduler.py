@@ -1,5 +1,3 @@
-# scheduler.py
-
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime
 import sqlite3
@@ -23,28 +21,39 @@ def send_goal_reminder(goal_id):
     """
     conn = get_db_connection()
     goal = conn.execute("SELECT * FROM goals WHERE id = ?", (goal_id,)).fetchone()
-    conn.close()
 
-    if not goal or goal["completed"] == 1:
+    if not goal or goal["completed"] == 1 or goal["is_paused"] == 1:
+        conn.close()
         return
 
     goal_name = goal["goal_name"]
     next_steps = goal["next_steps"]
-    
+
+    print(f"Sending reminder for goal: '{goal_name}'")
+
+    # Pause the scheduler immediately to prevent further emails
+    conn.execute("UPDATE goals SET is_paused = 1 WHERE id = ?", (goal_id,))
+    conn.commit()
 
     # Send the email using the email utility
     try:
+        if not next_steps:
+            message = "Please update the next steps to resume scheduling."
+        else:
+            message = next_steps
+
         send_email(
             os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com"),
             goal_id,
             goal_name,
-            next_steps
+            message
         )
 
         print(f"Email sent to {os.getenv('DEFAULT_TO_ADDRESS', 'example@domain.com')} for goal: '{goal_name}'")
     except Exception as e:
         print(f"Error sending email: {e}")
 
+    conn.close()
 
 def schedule_reminder(goal_id, iteration):
     """

@@ -6,7 +6,7 @@ def initialize_database():
     """
     conn = sqlite3.connect("mindbaboon.db")
 
-    # Create the goals table
+    # Create the goals table with new columns
     conn.execute("""
         CREATE TABLE IF NOT EXISTS goals (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -18,6 +18,8 @@ def initialize_database():
             next_steps TEXT,
             reward TEXT,
             completed INTEGER NOT NULL DEFAULT 0,
+            is_paused INTEGER NOT NULL DEFAULT 0, -- New column to track paused state
+            last_email_sent TIMESTAMP,          -- New column to track last email sent
             created_at TIMESTAMP NOT NULL,
             last_reminder_at TIMESTAMP
         );
