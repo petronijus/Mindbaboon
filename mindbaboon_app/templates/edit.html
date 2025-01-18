@@ -163,4 +163,72 @@
     </form>
   </div>
 </div>
-{% endblock %}
+
+    <!-- Iteration History Section -->
+    <div class="form-group">
+      <h2>Iteration History</h2>
+      <table id="iteration-history">
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Updated At</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- History rows will be populated dynamically -->
+        </tbody>
+      </table>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const iterationId = "{{ goal.id }}";
+    
+        function loadHistory(endpoint, tableId) {
+          fetch(endpoint)
+            .then(response => response.json())
+            .then(data => {
+              const tbody = document.getElementById(tableId).querySelector('tbody');
+              tbody.innerHTML = '';
+              data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${row.status || row.completed}</td><td>${row.updated_at || row.timestamp}</td>`;
+                tbody.appendChild(tr);
+              });
+            })
+            .catch(error => console.error('Error loading history:', error));
+        }
+    
+        // Load iteration history
+        loadHistory(`/iteration/${iterationId}/history`, 'iteration-history');
+    
+       // Load goal history
+        loadHistory(`/goal/${goalId}/history`, 'goal-history');
+
+    
+        // If query parameter `completed` is set, update the iteration status
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('completed')) {
+          const status = params.get('completed');
+    
+          fetch(`/iteration/${iterationId}/status`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ status }),
+          })
+            .then(response => response.json())
+            .then(data => {
+              console.log(data.message); // Optionally display a confirmation message
+              loadHistory(`/iteration/${iterationId}/history`, 'iteration-history');
+            })
+            .catch(error => console.error('Error updating status:', error));
+        }
+      });
+    </script>
+    
+    
+
+    {% endblock %}
+    

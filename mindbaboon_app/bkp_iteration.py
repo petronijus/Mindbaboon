@@ -10,7 +10,7 @@ def get_db_connection():
     return conn
 
 # Existing route for iteration view
-@iteration_bp.route("/iteration/<int:goal_id>", methods=["GET", "POST"])
+@iteration_bp.route('/iteration/<int:goal_id>', methods=['GET', 'POST'])
 def iteration_view(goal_id):
     conn = get_db_connection()
     goal = conn.execute("SELECT * FROM goals WHERE id = ?", (goal_id,)).fetchone()
@@ -20,34 +20,28 @@ def iteration_view(goal_id):
         return "Goal not found", 404
 
     if request.method == "POST":
-        completed = request.form.get("completed")  # Iteration-specific
-        description = request.form.get("description", "")  # Goal-specific
-        next_steps = request.form.get("next_steps", goal["next_steps"])  # Goal-specific
-        reward = request.form.get("reward", goal["reward"])  # Goal-specific
-        
+        completed = request.form.get("completed")
+        description = request.form.get("description", "")
+        next_steps = request.form.get("next_steps", goal["next_steps"])
+        reward = request.form.get("reward", goal["reward"])
+        iteration_frequency = request.form.get("iteration", goal["iteration"])
 
-        # Save to iteration_history if `completed` is updated
-        if completed:
-            conn.execute("""
-                INSERT INTO iteration_history (iteration_id, status, updated_at)
-                VALUES (?, ?, ?)
-            """, (goal_id, completed, datetime.now()))
-
-        # Update goal-specific fields in goals table
-        conn.execute("""
-            UPDATE goals
-            SET next_steps = ?, reward = ?, completed = ?, is_paused = 0
-            WHERE id = ?
-        """, (next_steps, reward, completed, goal_id))
-
-        # Save other changes to goal_history
+        # Save step to history
         conn.execute("""
             INSERT INTO goal_history (goal_id, completed, description, next_steps, reward, timestamp)
             VALUES (?, ?, ?, ?, ?, ?)
         """, (goal_id, completed, description, next_steps, reward, datetime.now()))
+        conn.commit()
 
+        # Update the goal with new data and unpause the scheduler
+        conn.execute("""
+            UPDATE goals
+            SET next_steps = ?, reward = ?, iteration = ?, is_paused = 0
+            WHERE id = ?
+        """, (next_steps, reward, iteration_frequency, goal_id))
         conn.commit()
         conn.close()
+
         return redirect(url_for("index"))
 
     conn.close()
@@ -55,6 +49,9 @@ def iteration_view(goal_id):
 
 @iteration_bp.route('/iteration/<int:iteration_id>/history', methods=['GET'])
 def get_iteration_history(iteration_id):
+    """
+    Fetch the history for a specific iteration.
+    """
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -63,33 +60,10 @@ def get_iteration_history(iteration_id):
         WHERE iteration_id = ?
         ORDER BY updated_at DESC;
     ''', (iteration_id,))
-    rows = cursor.fetchall()  # Fetch rows as Row objects
-
-    # Convert each Row to a dictionary
-    history = [dict(row) for row in rows]
+    history = cursor.fetchall()
 
     conn.close()
-    return jsonify(history)  # Now JSON serializable
-
-@iteration_bp.route('/goal/<int:goal_id>/history', methods=['GET'])
-def get_goal_history(goal_id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    cursor.execute('''
-        SELECT completed, description, next_steps, reward, timestamp
-        FROM goal_history
-        WHERE goal_id = ?
-        ORDER BY timestamp DESC;
-    ''', (goal_id,))
-    rows = cursor.fetchall()  # Fetch rows as Row objects
-
-    # Convert each Row to a dictionary
-    history = [dict(row) for row in rows]
-
-    conn.close()
-    return jsonify(history)  # Return JSON serializable data
-
+    return jsonify(history)
 
 @iteration_bp.route('/iteration/<int:iteration_id>/status', methods=['POST'])
 def update_iteration_status(iteration_id):

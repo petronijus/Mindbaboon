@@ -2,11 +2,12 @@ import sqlite3
 
 def initialize_database():
     """
-    Create the database schema for Mindbaboon, including goals and goal_history tables.
+    Create the database schema for Mindbaboon, including goals, goal_history,
+    and iteration_history tables.
     """
     conn = sqlite3.connect("mindbaboon.db")
 
-    # Create the goals table with new columns
+    # Create the goals table
     conn.execute("""
         CREATE TABLE IF NOT EXISTS goals (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -18,8 +19,8 @@ def initialize_database():
             next_steps TEXT,
             reward TEXT,
             completed INTEGER NOT NULL DEFAULT 0,
-            is_paused INTEGER NOT NULL DEFAULT 0, -- New column to track paused state
-            last_email_sent TIMESTAMP,          -- New column to track last email sent
+            is_paused INTEGER NOT NULL DEFAULT 0,
+            last_email_sent TIMESTAMP,
             created_at TIMESTAMP NOT NULL,
             last_reminder_at TIMESTAMP
         );
@@ -35,9 +36,26 @@ def initialize_database():
             next_steps TEXT,
             reward TEXT,
             timestamp TIMESTAMP NOT NULL,
-            FOREIGN KEY (goal_id) REFERENCES goals (id)
+            FOREIGN KEY (goal_id) REFERENCES goals (id) ON DELETE CASCADE
         );
     """)
+
+    # Add index for goal_id in goal_history
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_goal_history_goal_id ON goal_history (goal_id);")
+
+    # Create the iteration_history table
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS iteration_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            iteration_id INTEGER NOT NULL,
+            status TEXT NOT NULL,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (iteration_id) REFERENCES goals (id) ON DELETE CASCADE
+        );
+    """)
+
+    # Add index for iteration_id in iteration_history
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_iteration_history_iteration_id ON iteration_history (iteration_id);")
 
     conn.commit()
     conn.close()
