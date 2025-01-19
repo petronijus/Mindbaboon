@@ -171,6 +171,7 @@
         <thead>
           <tr>
             <th>Status</th>
+            <th>Was Done</th>
             <th>Next Steps</th>
             <th>Reward</th>
             <th>Updated At</th>
@@ -184,7 +185,7 @@
     
     <script>
       document.addEventListener('DOMContentLoaded', function () {
-        const goalId = {{ goal.id }}; // Ensure goal ID is available in the template
+        const goalId = "{{ goal.id }}"; // Add quotes to make it a valid JavaScript string
     
         function loadGoalHistory() {
           fetch(`/goal/${goalId}/history`)
@@ -196,6 +197,7 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                   <td>${row.completed || 'N/A'}</td>
+                  <td>${row.was_done || 'N/A'}</td>
                   <td>${row.next_steps || 'N/A'}</td>
                   <td>${row.reward || 'N/A'}</td>
                   <td>${row.timestamp || 'N/A'}</td>
@@ -211,8 +213,5 @@
       });
     </script>
     
-    
-    
-
-    {% endblock %}
+{% endblock %}
     

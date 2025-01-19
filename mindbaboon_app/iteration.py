@@ -21,7 +21,7 @@ def iteration_view(goal_id):
 
     if request.method == "POST":
         completed = request.form.get("completed")  # Iteration-specific
-        description = request.form.get("description", "")  # Goal-specific
+        was_done = request.form.get("was_done", "")  # Goal-specific
         next_steps = request.form.get("next_steps", goal["next_steps"])  # Goal-specific
         reward = request.form.get("reward", goal["reward"])  # Goal-specific
         
@@ -42,9 +42,9 @@ def iteration_view(goal_id):
 
         # Save other changes to goal_history
         conn.execute("""
-            INSERT INTO goal_history (goal_id, completed, description, next_steps, reward, timestamp)
+            INSERT INTO goal_history (goal_id, completed, was_done, next_steps, reward, timestamp)
             VALUES (?, ?, ?, ?, ?, ?)
-        """, (goal_id, completed, description, next_steps, reward, datetime.now()))
+        """, (goal_id, completed, was_done, next_steps, reward, datetime.now()))
 
         conn.commit()
         conn.close()
@@ -77,7 +77,7 @@ def get_goal_history(goal_id):
     cursor = conn.cursor()
 
     cursor.execute('''
-        SELECT completed, description, next_steps, reward, timestamp
+        SELECT completed, was_done, next_steps, reward, timestamp
         FROM goal_history
         WHERE goal_id = ?
         ORDER BY timestamp DESC;

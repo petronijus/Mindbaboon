@@ -32,7 +32,7 @@ def initialize_database():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             goal_id INTEGER NOT NULL,
             completed TEXT NOT NULL,
-            description TEXT,
+            was_done TEXT,
             next_steps TEXT,
             reward TEXT,
             timestamp TIMESTAMP NOT NULL,
