@@ -185,12 +185,30 @@ def edit_goal(goal_id):
     return render_template("edit.html", goal=goal)
 
 # -- Delete a Goal --
-@app.route("/delete/<int:goal_id>", methods=["POST"])
-def delete_goal(goal_id):
-    conn = get_db_connection()
-    conn.execute("DELETE FROM goals WHERE id = ?", (goal_id,))
-    conn.commit()
-    conn.close()
+@app.route('/delete_goal', methods=['POST'])
+def delete_goal():
+    data = request.json
+    goal_id = data.get('goal_id')
+
+    if not goal_id:
+        return jsonify({"error": "Goal ID is required."}), 400
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Delete history associated with the goal
+        cursor.execute("DELETE FROM goal_history WHERE goal_id = ?", (goal_id,))
+
+        # Delete the goal itself
+        cursor.execute("DELETE FROM goals WHERE id = ?", (goal_id,))
+
+        conn.commit()
+        conn.close()
+
+        return jsonify({"message": "Goal and its history successfully deleted."}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
     # Remove the reminder job from APScheduler
     remove_reminder(goal_id)
