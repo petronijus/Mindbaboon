@@ -6,6 +6,7 @@ from flask import Flask, render_template, request, redirect, url_for, request, j
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from iteration import iteration_bp
+import os
 
 
 # Predefined list of motivational goals or quotes
@@ -38,7 +39,8 @@ def init_scheduler():
 
 # 2. Database Helpers
 def get_db_connection():
-    conn = sqlite3.connect("mindbaboon.db")
+    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'mindbaboon.db')
+    conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     return conn
 

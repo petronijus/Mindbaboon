@@ -1,11 +1,18 @@
 import sqlite3
+import os
 
 def initialize_database():
     """
     Create the database schema for Mindbaboon, including goals, goal_history,
     and iteration_history tables.
     """
-    conn = sqlite3.connect("mindbaboon.db")
+    # Create data directory if it doesn't exist
+    data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+    os.makedirs(data_dir, exist_ok=True)
+
+    # Connect to database in data directory
+    db_path = os.path.join(data_dir, 'mindbaboon.db')
+    conn = sqlite3.connect(db_path)
 
     # Create the goals table
     conn.execute("""
@@ -62,4 +69,4 @@ def initialize_database():
 
 if __name__ == "__main__":
     initialize_database()
-    print("Database initialized successfully.")
+    print("Database initialized successfully in data directory.")

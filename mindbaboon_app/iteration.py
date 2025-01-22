@@ -1,11 +1,14 @@
 from flask import Blueprint, request, render_template, redirect, url_for, jsonify
 from datetime import datetime
 import sqlite3
+import os
 
 iteration_bp = Blueprint('iteration', __name__)
 
 def get_db_connection():
-    conn = sqlite3.connect("mindbaboon.db")
+    """Database connection with path to data directory"""
+    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'mindbaboon.db')
+    conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     return conn
 
