@@ -2,7 +2,7 @@
 
 import sqlite3
 import random
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, request, jsonify
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from iteration import iteration_bp
@@ -187,11 +187,10 @@ def edit_goal(goal_id):
 # -- Delete a Goal --
 @app.route('/delete_goal', methods=['POST'])
 def delete_goal():
-    data = request.json
-    goal_id = data.get('goal_id')
+    goal_id = request.form.get('goal_id')
 
     if not goal_id:
-        return jsonify({"error": "Goal ID is required."}), 400
+        return redirect(url_for("index"))
 
     try:
         conn = get_db_connection()
@@ -206,14 +205,16 @@ def delete_goal():
         conn.commit()
         conn.close()
 
-        return jsonify({"message": "Goal and its history successfully deleted."}), 200
+        # Remove the reminder job from APScheduler
+        remove_reminder(goal_id)
+
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-    # Remove the reminder job from APScheduler
-    remove_reminder(goal_id)
-
+        # Optionally log the error for debugging purposes
+        print(f"Error occurred: {e}")
+    
+    # Redirect back to the index page
     return redirect(url_for("index"))
+
 
 # 4. Run the App
 if __name__ == "__main__":
