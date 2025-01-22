@@ -1,0 +1,5 @@
+Flask>=2.3.2
+APScheduler>=3.10.1
+python-dotenv>=1.0.0
+#sqlite3  # included with Python, no need to install separately
+#smtplib  # included with Python, no need to install separately
