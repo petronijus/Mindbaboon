@@ -4,7 +4,7 @@ import os
 def initialize_database():
     """
     Create the database schema for Mindbaboon, including goals, goal_history,
-    and iteration_history tables.
+    iteration_history, and apscheduler tables.
     """
     # Create data directory if it doesn't exist
     data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
@@ -63,6 +63,19 @@ def initialize_database():
 
     # Add index for iteration_id in iteration_history
     conn.execute("CREATE INDEX IF NOT EXISTS idx_iteration_history_iteration_id ON iteration_history (iteration_id);")
+
+    # Create the APScheduler jobs table
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS apscheduler_jobs (
+            id VARCHAR(191) NOT NULL,
+            next_run_time FLOAT,
+            job_state BLOB NOT NULL,
+            PRIMARY KEY (id)
+        );
+    """)
+
+    # Add index for next_run_time in apscheduler_jobs
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_apscheduler_jobs_next_run_time ON apscheduler_jobs (next_run_time);")
 
     conn.commit()
     conn.close()
