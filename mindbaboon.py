@@ -220,6 +220,6 @@ def delete_goal():
 
 # 4. Run the App
 if __name__ == "__main__":
-    create_tables()  # Create the DB table if missing
-    init_scheduler()  # Use the new init function
-    app.run(debug=True)
+    create_tables()
+    init_scheduler()
+    app.run(host='0.0.0.0', port=5000)
