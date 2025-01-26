@@ -1,19 +1,18 @@
 version: '3.8'
-
 services:
   web:
     build: .
+    restart: unless-stopped
     ports:
       - "5000:5000"
     volumes:
       - ./data:/app/data
-      - ./.env:/app/.env
     environment:
-      - FLASK_APP=mindbaboon.py
-      - FLASK_ENV=production
-      - EMAIL_SMTP_SERVER: ${EMAIL_SMTP_SERVER}
-      - EMAIL_SMTP_PORT: ${EMAIL_SMTP_PORT}
-      - EMAIL_USERNAME: ${EMAIL_USERNAME}
-      - EMAIL_PASSWORD: ${EMAIL_PASSWORD}
-      - DEFAULT_TO_ADDRESS: ${DEFAULT_TO_ADDRESS}
-    restart: unless-stopped
+      FLASK_APP: mindbaboon.py
+      FLASK_ENV: production
+      FLASK_RUN_HOST: 0.0.0.0
+      EMAIL_SMTP_SERVER: smtp.gmail.com
+      EMAIL_SMTP_PORT: 587
+      EMAIL_USERNAME: your_email@gmail.com
+      EMAIL_PASSWORD: your_password
+      DEFAULT_TO_ADDRESS: your_email@gmail.com
