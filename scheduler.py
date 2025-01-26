@@ -6,6 +6,7 @@ import sqlite3
 import os
 from email_utils import send_email  # Import the email utility
 import threading
+from mindbaboon import get_db_connection
 
 class SchedulerManager:
     _instance = None
@@ -47,13 +48,6 @@ class SchedulerManager:
 
 # Create a single scheduler instance
 scheduler = SchedulerManager.get_scheduler()
-
-def get_db_connection():
-    """Database connection with path to data directory"""
-    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'mindbaboon.db')
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    return conn
 
 def send_goal_reminder(goal_id):
     """

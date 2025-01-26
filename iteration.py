@@ -2,15 +2,11 @@ from flask import Blueprint, request, render_template, redirect, url_for, jsonif
 from datetime import datetime
 import sqlite3
 import os
+from mindbaboon import get_db_connection
 
 iteration_bp = Blueprint('iteration', __name__)
 
-def get_db_connection():
-    """Database connection with path to data directory"""
-    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'mindbaboon.db')
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    return conn
+
 
 # Existing route for iteration view
 @iteration_bp.route("/iteration/<int:goal_id>", methods=["GET", "POST"])
@@ -118,3 +114,4 @@ def update_iteration_status(iteration_id):
     conn.close()
 
     return jsonify({"message": "Status updated successfully."})
+

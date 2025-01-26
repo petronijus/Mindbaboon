@@ -8,11 +8,11 @@ services:
     volumes:
       - ./data:/app/data
     environment:
-      FLASK_APP: mindbaboon.py
-      FLASK_ENV: production
-      FLASK_RUN_HOST: 0.0.0.0
-      EMAIL_SMTP_SERVER: smtp.gmail.com
-      EMAIL_SMTP_PORT: 587
-      EMAIL_USERNAME: you@example.com
-      EMAIL_PASSWORD: ***REMOVED***
-      DEFAULT_TO_ADDRESS: you@example.com
+      - FLASK_APP=mindbaboon.py
+      - FLASK_ENV=production
+      - FLASK_RUN_HOST=0.0.0.0
+      - EMAIL_SMTP_SERVER=smtp.gmail.com
+      - EMAIL_SMTP_PORT=587
+      - EMAIL_USERNAME=you@example.com
+      - EMAIL_PASSWORD=***REMOVED***
+      - DEFAULT_TO_ADDRESS=you@example.com
