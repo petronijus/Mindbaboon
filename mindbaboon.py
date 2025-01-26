@@ -6,6 +6,8 @@ from flask import Flask, render_template, request, redirect, url_for, request, j
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from iteration import iteration_bp
+
+from database import get_db_connection
 import os
 
 
@@ -37,24 +39,6 @@ def init_scheduler():
         # If scheduler is already running, just pass
         pass
 
-# 2. Database Helpers
-def get_db_connection():
-    """Get database connection with proper error handling and path resolution"""
-    try:
-        # First try the Docker volume path
-        data_dir = '/app/data'
-        if not os.path.exists(data_dir):
-            # Fallback to local development path
-            data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
-            os.makedirs(data_dir, exist_ok=True)
-
-        db_path = os.path.join(data_dir, 'mindbaboon.db')
-        conn = sqlite3.connect(db_path)
-        conn.row_factory = sqlite3.Row
-        return conn
-    except Exception as e:
-        print(f"Database connection error: {e}")
-        raise
 
 def create_tables():
     conn = get_db_connection()

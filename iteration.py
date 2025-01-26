@@ -2,7 +2,7 @@ from flask import Blueprint, request, render_template, redirect, url_for, jsonif
 from datetime import datetime
 import sqlite3
 import os
-from mindbaboon import get_db_connection
+from database import get_db_connection
 
 iteration_bp = Blueprint('iteration', __name__)
 

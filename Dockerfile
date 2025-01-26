@@ -1,5 +1,5 @@
-# Use Python 3.9+ as base image
-FROM python:3.9-slim
+# Use Python 3.11 as base image
+FROM python:3.11-slim
 
 # Set working directory
 WORKDIR /app
@@ -20,6 +20,9 @@ COPY . .
 
 # Create data directory and set permissions
 RUN mkdir -p /app/data && chmod 777 /app/data
+
+# Initialize the database
+RUN python init_mindbaboon_db.py
 
 # Expose port
 EXPOSE 5000

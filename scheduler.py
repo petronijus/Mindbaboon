@@ -6,7 +6,7 @@ import sqlite3
 import os
 from email_utils import send_email  # Import the email utility
 import threading
-from mindbaboon import get_db_connection
+from database import get_db_connection
 
 class SchedulerManager:
     _instance = None
