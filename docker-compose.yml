@@ -13,6 +13,6 @@ services:
       FLASK_RUN_HOST: 0.0.0.0
       EMAIL_SMTP_SERVER: smtp.gmail.com
       EMAIL_SMTP_PORT: 587
-      EMAIL_USERNAME: your_email@gmail.com
-      EMAIL_PASSWORD: your_password
-      DEFAULT_TO_ADDRESS: your_email@gmail.com
+      EMAIL_USERNAME: you@example.com
+      EMAIL_PASSWORD: ***REMOVED***
+      DEFAULT_TO_ADDRESS: you@example.com
