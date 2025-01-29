@@ -9,7 +9,8 @@ services:
       - ./data:/app/data
     environment:
       - FLASK_APP=mindbaboon.py
-      - FLASK_ENV=production
+      - FLASK_ENV: "development"
+      - FLASK_DEBUG: "1"
       - FLASK_RUN_HOST=0.0.0.0
       - EMAIL_SMTP_SERVER=smtp.gmail.com
       - EMAIL_SMTP_PORT=587
