@@ -50,14 +50,22 @@ class SchedulerManager:
 scheduler = SchedulerManager.get_scheduler()
 
 def send_goal_reminder(goal_id):
-    """
-    Called by APScheduler job to send an email reminder for a specific goal.
-    """
-    with SchedulerManager._lock:  # Use lock to prevent concurrent execution
+    with SchedulerManager._lock:  
         conn = get_db_connection()
+        
+        # Fetch goal from database
         goal = conn.execute("SELECT * FROM goals WHERE id = ?", (goal_id,)).fetchone()
 
-        if not goal or goal["completed"] == 1 or goal["is_paused"] == 1:
+        # Debugging output
+        print(f"DEBUG: Goal data for ID {goal_id}: {goal}")  # 👀 Check what's retrieved
+
+        # Ensure goal exists and can be accessed as a dictionary
+        if not goal:
+            print(f"WARNING: No goal found with ID {goal_id}. Skipping reminder.")
+            conn.close()
+            return
+
+        if goal["completed"] == 1 or goal["is_paused"] == 1:
             conn.close()
             return
 
@@ -72,10 +80,7 @@ def send_goal_reminder(goal_id):
 
         # Send the email using the email utility
         try:
-            if not next_steps:
-                message = "Please update the next steps to resume scheduling."
-            else:
-                message = next_steps
+            message = next_steps if next_steps else "Please update the next steps to resume scheduling."
 
             send_email(
                 os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com"),
@@ -84,11 +89,12 @@ def send_goal_reminder(goal_id):
                 message
             )
 
-            print(f"Email sent to {os.getenv('DEFAULT_TO_ADDRESS', 'example@domain.com')} for goal: '{goal_name}'")
+            print(f"Email sent for goal: '{goal_name}'")
         except Exception as e:
             print(f"Error sending email: {e}")
 
         conn.close()
+
 
 def schedule_reminder(goal_id, iteration):
     """
