@@ -15,8 +15,7 @@ EMAIL_SMTP_PORT = int(os.getenv("EMAIL_SMTP_PORT", 587))
 EMAIL_USERNAME = os.getenv("EMAIL_USERNAME")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 
-print(f"Loaded email settings: {EMAIL_SMTP_SERVER}, {EMAIL_USERNAME}")
-
+print(f"DEBUG: Email Settings -> SMTP: {EMAIL_SMTP_SERVER}, PORT: {EMAIL_SMTP_PORT}, USERNAME: {EMAIL_USERNAME}")
 
 def format_email_content(goal_name, next_steps, goal_id):
     """
@@ -49,6 +48,7 @@ def send_email(to_address, goal_id, goal_name, next_steps):
     Send an email using SMTP.
     """
     subject, body = format_email_content(goal_name, next_steps, goal_id)
+    print("DEBUG: Preparing to send email...")
 
     msg = EmailMessage()
     msg["From"] = EMAIL_USERNAME
@@ -56,7 +56,18 @@ def send_email(to_address, goal_id, goal_name, next_steps):
     msg["Subject"] = subject
     msg.set_content(body)
 
-    with smtplib.SMTP(EMAIL_SMTP_SERVER, EMAIL_SMTP_PORT) as smtp:
+    try:
+        print("DEBUG: Connecting to SMTP server...")
+        smtp = smtplib.SMTP(EMAIL_SMTP_SERVER, EMAIL_SMTP_PORT)
         smtp.starttls()
-        smtp.login(EMAIL_USERNAME, EMAIL_PASSWORD)
+
+        print("DEBUG: Logging in...")
+        smtp.login(EMAIL_USERNAME, EMAIL_PASSWORD)  # 🔴 Issue likely here!
+
+        print("DEBUG: Sending email...")
         smtp.send_message(msg)
+
+        print("✅ DEBUG: Email sent successfully!")
+        smtp.quit()
+    except Exception as e:
+        print(f"❌ DEBUG: Email failed to send. Error: {e}")
