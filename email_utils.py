@@ -15,7 +15,10 @@ EMAIL_SMTP_PORT = int(os.getenv("EMAIL_SMTP_PORT", 587))
 EMAIL_USERNAME = os.getenv("EMAIL_USERNAME")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 
-print(f"DEBUG: Email Settings -> SMTP: {EMAIL_SMTP_SERVER}, PORT: {EMAIL_SMTP_PORT}, USERNAME: {EMAIL_USERNAME}")
+print(f"DEBUG: Using SMTP Server: {EMAIL_SMTP_SERVER}")
+print(f"DEBUG: Using SMTP Port: {EMAIL_SMTP_PORT}")
+print(f"DEBUG: Using Email Username: {EMAIL_USERNAME}")
+print(f"DEBUG: Using Email Password: {EMAIL_PASSWORD[:4]}******")  # Masked for security
 
 def format_email_content(goal_name, next_steps, goal_id):
     """
@@ -62,7 +65,7 @@ def send_email(to_address, goal_id, goal_name, next_steps):
         smtp.starttls()
 
         print("DEBUG: Logging in...")
-        smtp.login(EMAIL_USERNAME, EMAIL_PASSWORD)  # 🔴 Issue likely here!
+        smtp.login(EMAIL_USERNAME, EMAIL_PASSWORD)  # Issue likely here!
 
         print("DEBUG: Sending email...")
         smtp.send_message(msg)
@@ -70,4 +73,4 @@ def send_email(to_address, goal_id, goal_name, next_steps):
         print("✅ DEBUG: Email sent successfully!")
         smtp.quit()
     except Exception as e:
-        print(f"❌ DEBUG: Email failed to send. Error: {e}")
+        print(f"DEBUG: Email failed to send. Error: {e}")
