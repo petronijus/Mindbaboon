@@ -32,7 +32,7 @@ class SchedulerManager:
             }
 
             job_defaults = {
-                'coalesce': True,  # Changed to True to prevent duplicate runs
+                'coalesce': False,  # Changed to True to prevent duplicate runs
                 'max_instances': 1,
                 'misfire_grace_time': 3600
             }
@@ -54,6 +54,7 @@ def send_goal_reminder(goal_id):
     Marks the goal as paused only after the email has been sent.
     If sending fails, it resets is_paused to allow future attempts.
     """
+    print(f"send goal function is here")
     with SchedulerManager._lock:  
         conn = get_db_connection()
         try:
@@ -103,6 +104,7 @@ def schedule_reminder(goal_id, iteration):
     """
     Schedule or update a recurring APScheduler job.
     """
+    print(f"schedule reminder function is here")
     interval_args = {
         "week": {"seconds": 30},
         "2 weeks": {"weeks": 2},
@@ -135,6 +137,7 @@ def remove_reminder(goal_id):
     """
     Remove a previously-scheduled job for the given goal_id.
     """
+    print(f"remove reminder function is here")
     job_id = f"goal_{goal_id}"
     try:
         scheduler.remove_job(job_id)

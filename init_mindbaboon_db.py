@@ -7,7 +7,8 @@ def initialize_database():
     iteration_history, and apscheduler tables.
     """
     # Create data directory if it doesn't exist
-    data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+    data_dir = '/app/data'
+    # data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
     os.makedirs(data_dir, exist_ok=True)
 
     # Connect to database in data directory
