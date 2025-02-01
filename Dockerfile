@@ -1,5 +1,5 @@
 # Use Python 3.11 as base image
-FROM python:3.11
+FROM python:3.11-slim
 
 # Set working directory
 WORKDIR /app
@@ -7,6 +7,8 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
+    ca-certificates \
+    libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first to leverage Docker cache
@@ -28,4 +30,5 @@ RUN python init_mindbaboon_db.py
 EXPOSE 5000
 
 # Command to run the application
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "mindbaboon:app", "--log-level", "debug", "--access-logfile", "-", "--error-logfile", "-"]
+#CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "mindbaboon:app", "--log-level", "debug", "--access-logfile", "-", "--error-logfile", "-"]
+CMD ["python", "mindbaboon.py"]
