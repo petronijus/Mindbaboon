@@ -50,50 +50,54 @@ class SchedulerManager:
 scheduler = SchedulerManager.get_scheduler()
 
 def send_goal_reminder(goal_id):
+    """
+    Called by APScheduler job to send an email reminder for a specific goal.
+    Marks the goal as paused only after the email has been sent.
+    If sending fails, it resets is_paused to allow future attempts.
+    """
     with SchedulerManager._lock:  
         conn = get_db_connection()
-        
-        # Fetch goal from database
-        goal = conn.execute("SELECT * FROM goals WHERE id = ?", (goal_id,)).fetchone()
-
-        # Debugging output
-        print(f"DEBUG: Goal data for ID {goal_id}: {goal}")  # 👀 Check what's retrieved
-
-        # Ensure goal exists and can be accessed as a dictionary
-        if not goal:
-            print(f"WARNING: No goal found with ID {goal_id}. Skipping reminder.")
-            conn.close()
-            return
-
-        if goal["completed"] == 1 or goal["is_paused"] == 1:
-            conn.close()
-            return
-
-        goal_name = goal["goal_name"]
-        next_steps = goal["next_steps"]
-
-        print(f"Sending reminder for goal: '{goal_name}'")
-
-        # Pause the scheduler immediately to prevent further emails
-        conn.execute("UPDATE goals SET is_paused = 1 WHERE id = ?", (goal_id,))
-        conn.commit()
-
-        # Send the email using the email utility
         try:
+            # Fetch goal from database
+            goal = conn.execute("SELECT * FROM goals WHERE id = ?", (goal_id,)).fetchone()
+            print(f"DEBUG: Goal data for ID {goal_id}: {goal}")
+
+            if not goal:
+                print(f"WARNING: No goal found with ID {goal_id}. Skipping reminder.")
+                return
+
+            if goal["completed"] == 1 or goal["is_paused"] == 1:
+                print(f"INFO: Goal {goal_id} is either completed or already paused.")
+                return
+
+            goal_name = goal["goal_name"]
+            next_steps = goal["next_steps"]
+
+            print(f"DEBUG: Attempting to send reminder for goal: '{goal_name}'")
+
+            # Prepare email message
             message = next_steps if next_steps else "Please update the next steps to resume scheduling."
+            try:
+                send_email(
+                    os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com"),
+                    goal_id,
+                    goal_name,
+                    message
+                )
+                print(f"DEBUG: Email sent for goal: '{goal_name}'")
 
-            send_email(
-                os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com"),
-                goal_id,
-                goal_name,
-                message
-            )
-
-            print(f"Email sent for goal: '{goal_name}'")
-        except Exception as e:
-            print(f"Error sending email: {e}")
-
-        conn.close()
+                # Mark goal as paused only after email successfully sends
+                conn.execute("UPDATE goals SET is_paused = 1 WHERE id = ?", (goal_id,))
+                conn.commit()
+            except Exception as email_err:
+                print(f"ERROR: Failed to send email for goal '{goal_name}': {email_err}")
+                # Ensure the goal is not paused so that the reminder can be retried later
+                conn.execute("UPDATE goals SET is_paused = 0 WHERE id = ?", (goal_id,))
+                conn.commit()
+        except Exception as outer_err:
+            print(f"ERROR in send_goal_reminder: {outer_err}")
+        finally:
+            conn.close()
 
 
 def schedule_reminder(goal_id, iteration):
