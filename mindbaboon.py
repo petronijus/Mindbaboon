@@ -53,12 +53,16 @@ def create_tables():
             next_steps TEXT,
             reward TEXT,
             completed INTEGER NOT NULL DEFAULT 0,
+            is_paused INTEGER NOT NULL DEFAULT 0,
+            last_email_sent TIMESTAMP,
             created_at TIMESTAMP NOT NULL,
             last_reminder_at TIMESTAMP
         );
     """)
     conn.commit()
     conn.close()
+
+    
 
 # 3. Routes
 
