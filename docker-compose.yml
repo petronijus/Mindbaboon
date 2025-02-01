@@ -6,10 +6,10 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - ./data:/app/data
+      - mindbaboon_data:/app/data
     environment:
       - FLASK_APP=mindbaboon.py
-      - FLASK_ENV=development
+      - FLASK_ENV=developments
       - FLASK_DEBUG=1
       - FLASK_RUN_HOST=0.0.0.0
       - EMAIL_SMTP_SERVER=smtp.gmail.com
@@ -17,3 +17,6 @@ services:
       - EMAIL_USERNAME=you@example.com
       - EMAIL_PASSWORD=***REMOVED***
       - DEFAULT_TO_ADDRESS=you@example.com
+
+volumes:
+  mindbaboon_data:
