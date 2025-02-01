@@ -85,14 +85,17 @@ def send_goal_reminder(goal_id):
                     message
                 )
                 print(f"DEBUG: Email sent for goal: '{goal_name}'")
-                
-                # Removed the pausing functionality
-                
+
+                # Mark goal as paused only after email successfully sends
+                conn.execute("UPDATE goals SET is_paused = 1 WHERE id = ?", (goal_id,))
+                conn.commit()
             except Exception as email_err:
                 print(f"ERROR: Failed to send email for goal '{goal_name}': {email_err}")
-                
-        except Exception as e:
-            print(f"ERROR in send_goal_reminder: {e}")
+                # Ensure the goal is not paused so that the reminder can be retried later
+                conn.execute("UPDATE goals SET is_paused = 0 WHERE id = ?", (goal_id,))
+                conn.commit()
+        except Exception as outer_err:
+            print(f"ERROR in send_goal_reminder: {outer_err}")
         finally:
             conn.close()
 

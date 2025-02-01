@@ -8,6 +8,11 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import os
 from database import get_db_connection
 from iteration import iteration_bp
+import logging
+
+# Add after imports
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 # Predefined list of motivational goals or quotes
 MOTIVATIONAL_GOALS = [
@@ -32,10 +37,11 @@ app.register_blueprint(iteration_bp)
 # 1. Start APScheduler once, near app startup
 def init_scheduler():
     try:
+        logger.debug("Initializing scheduler...")
         scheduler.start()
+        logger.debug("Scheduler started successfully")
     except Exception as e:
-        # If scheduler is already running, just pass
-        pass
+        logger.error(f"Error starting scheduler: {e}")
 
 
 def create_tables():
