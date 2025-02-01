@@ -15,8 +15,10 @@ class SchedulerManager:
     @classmethod
     def get_scheduler(cls):
         if cls._instance is None:
-            # Use the same database as the main application
-            data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+            # Use the Docker volume path
+            data_dir = '/app/data'
+            if not os.path.exists(data_dir):
+                os.makedirs(data_dir, exist_ok=True)
             db_path = os.path.join(data_dir, 'mindbaboon.db')
             jobstore_path = f'sqlite:///{db_path}'
 
@@ -40,9 +42,6 @@ class SchedulerManager:
                 executors=executors,
                 job_defaults=job_defaults
             )
-
-            if not cls._instance.running:
-                cls._instance.start()
 
         return cls._instance
 

@@ -5,11 +5,9 @@ import random
 from flask import Flask, render_template, request, redirect, url_for, request, jsonify
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
-from iteration import iteration_bp
-
-from database import get_db_connection
 import os
-
+from database import get_db_connection
+from iteration import iteration_bp
 
 # Predefined list of motivational goals or quotes
 MOTIVATIONAL_GOALS = [
