@@ -28,4 +28,4 @@ RUN python init_mindbaboon_db.py
 EXPOSE 5000
 
 # Command to run the application
-CMD ["python", "mindbaboon.py"]
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "mindbaboon:app"]
