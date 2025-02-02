@@ -9,6 +9,7 @@ import os
 from database import get_db_connection
 from iteration import iteration_bp
 import logging
+from email_utils import send_email  # Import email utility
 
 # Add after imports
 logging.basicConfig(level=logging.DEBUG)
@@ -226,10 +227,19 @@ def delete_goal():
     # Redirect back to the index page
     return redirect(url_for("index"))
 
+# Send startup email
+def send_startup_email():
+    """Send a startup notification email."""
+    try:
+        send_email(os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com"), 0, "Startup Notification", "Hello, World!")
+        logger.info("Startup email sent successfully.")
+    except Exception as e:
+        logger.error(f"Failed to send startup email: {e}")
 
 # 4. Run the App
 if __name__ == "__main__":
     create_tables()
     init_scheduler()
+    send_startup_email()
     logger.info("Starting Flask application...")
     app.run(host='0.0.0.0', port=5000)

@@ -24,7 +24,7 @@ class SchedulerManager:
     def get_scheduler(cls):
         if cls._instance is None:
             # Use the Docker volume path
-            data_dir = '/app/data'
+            data_dir = 'data'
             if not os.path.exists(data_dir):
                 os.makedirs(data_dir, exist_ok=True)
             db_path = os.path.join(data_dir, 'mindbaboon.db')
@@ -60,6 +60,8 @@ scheduler = SchedulerManager.get_scheduler()
 def send_goal_reminder(goal_id):
     """
     Called by APScheduler job to send an email reminder for a specific goal.
+    Marks the goal as paused only after the email has been sent.
+    If sending fails, it resets is_paused to allow future attempts.
     """
     logger.info(f"=== send_goal_reminder START for goal_id: {goal_id} ===")
     print(f"send goal function is here for goal_id: {goal_id}")
@@ -94,11 +96,12 @@ def send_goal_reminder(goal_id):
                     goal_name,
                     message
                 )
-                print(f"DEBUG: Email sent for goal: '{goal_name}'")
+                
 
                 # Mark goal as paused only after email successfully sends
                 conn.execute("UPDATE goals SET is_paused = 1 WHERE id = ?", (goal_id,))
                 conn.commit()
+                print(f"DEBUG: Email sent for goal: '{goal_name}'")
                 logger.info(f"DEBUG: Email sent for goal: '{goal_name}'")
             except Exception as email_err:
                 print(f"ERROR: Failed to send email for goal '{goal_name}': {email_err}")
