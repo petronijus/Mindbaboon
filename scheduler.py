@@ -7,6 +7,10 @@ import os
 from email_utils import send_email  # Import the email utility
 import threading
 from database import get_db_connection
+import pytz
+
+# Define Prague timezone
+TIMEZONE = pytz.timezone('Europe/Prague')
 
 class SchedulerManager:
     _instance = None
@@ -40,7 +44,8 @@ class SchedulerManager:
             cls._instance = BackgroundScheduler(
                 jobstores=jobstores,
                 executors=executors,
-                job_defaults=job_defaults
+                job_defaults=job_defaults,
+                timezone=TIMEZONE  # Set Prague timezone
             )
 
         return cls._instance
@@ -112,6 +117,7 @@ def schedule_reminder(goal_id, iteration):
     }.get(iteration, None)
 
     if not interval_args:
+        print(f"WARNING: Invalid iteration value: {iteration}")
         return
 
     job_id = f"goal_{goal_id}"
@@ -122,16 +128,21 @@ def schedule_reminder(goal_id, iteration):
     except:
         pass  # Job doesn't exist, that's fine
 
-    # Add new job
-    scheduler.add_job(
-        func=send_goal_reminder,
-        trigger="interval",
-        id=job_id,
-        replace_existing=True,
-        kwargs={"goal_id": goal_id},
-        **interval_args,
-        next_run_time=datetime.now()
-    )
+    # Add new job with Prague timezone
+    try:
+        now = datetime.now(TIMEZONE)
+        job = scheduler.add_job(
+            func=send_goal_reminder,
+            trigger="interval",
+            id=job_id,
+            replace_existing=True,
+            kwargs={"goal_id": goal_id},
+            **interval_args,
+            next_run_time=now
+        )
+        print(f"DEBUG: Successfully scheduled job {job_id}, next run at: {job.next_run_time}")
+    except Exception as e:
+        print(f"ERROR: Failed to schedule job: {e}")
 
 def remove_reminder(goal_id):
     """

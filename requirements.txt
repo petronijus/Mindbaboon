@@ -5,3 +5,4 @@ python-dotenv>=1.0.0
 #smtplib  # included with Python, no need to install separately
 SQLAlchemy>=2.0.0
 gunicorn
+pytz

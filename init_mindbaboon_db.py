@@ -1,5 +1,9 @@
 import sqlite3
 import os
+from datetime import datetime
+import pytz
+
+TIMEZONE = pytz.timezone('Europe/Prague')
 
 def initialize_database():
     """

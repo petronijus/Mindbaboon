@@ -3,6 +3,10 @@ from datetime import datetime
 import sqlite3
 import os
 from database import get_db_connection
+import pytz
+
+# Define Prague timezone at the top
+TIMEZONE = pytz.timezone('Europe/Prague')
 
 iteration_bp = Blueprint('iteration', __name__)
 
@@ -30,7 +34,7 @@ def iteration_view(goal_id):
             conn.execute("""
                 INSERT INTO iteration_history (iteration_id, status, updated_at)
                 VALUES (?, ?, ?)
-            """, (goal_id, completed, datetime.now()))
+            """, (goal_id, completed, datetime.now(TIMEZONE)))
 
         # Update goal-specific fields in goals table
         conn.execute("""
@@ -43,7 +47,7 @@ def iteration_view(goal_id):
         conn.execute("""
             INSERT INTO goal_history (goal_id, completed, was_done, next_steps, reward, timestamp)
             VALUES (?, ?, ?, ?, ?, ?)
-        """, (goal_id, completed, was_done, next_steps, reward, datetime.now()))
+        """, (goal_id, completed, was_done, next_steps, reward, datetime.now(TIMEZONE)))
 
         conn.commit()
         conn.close()
