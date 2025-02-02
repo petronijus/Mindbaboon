@@ -3,3 +3,4 @@ __pycache__
 /__pycache__
 /data
 data/mindbaboon.db
+*.db
