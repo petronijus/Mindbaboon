@@ -16,6 +16,11 @@ TIMEZONE = pytz.timezone('Europe/Prague')
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+# Prevent multiple log handlers
+if not logger.hasHandlers():
+    handler = logging.StreamHandler()
+    logger.addHandler(handler)
+
 class SchedulerManager:
     _instance = None
     _lock = threading.Lock()
@@ -23,35 +28,25 @@ class SchedulerManager:
     @classmethod
     def get_scheduler(cls):
         if cls._instance is None:
-            # Use the Docker volume path
-            data_dir = 'data'
-            if not os.path.exists(data_dir):
-                os.makedirs(data_dir, exist_ok=True)
-            db_path = os.path.join(data_dir, 'mindbaboon.db')
-            jobstore_path = f'sqlite:///{db_path}'
-
-            # Configure scheduler with persistent storage
-            jobstores = {
-                'default': SQLAlchemyJobStore(url=jobstore_path)
-            }
-
-            executors = {
-                'default': ThreadPoolExecutor(20)
-            }
-
-            job_defaults = {
-                'coalesce': False,  # Changed to True to prevent duplicate runs
-                'max_instances': 1,
-                'misfire_grace_time': 3600
-            }
-
-            cls._instance = BackgroundScheduler(
-                jobstores=jobstores,
-                executors=executors,
-                job_defaults=job_defaults,
-                timezone=TIMEZONE  # Set Prague timezone
-            )
-
+            with cls._lock:
+                if cls._instance is None:  # Double-check locking pattern
+                    data_dir = 'data'
+                    os.makedirs(data_dir, exist_ok=True)
+                    db_path = os.path.join(data_dir, 'mindbaboon.db')
+                    jobstore_path = f'sqlite:///{db_path}'
+                    jobstores = {'default': SQLAlchemyJobStore(url=jobstore_path)}
+                    executors = {'default': ThreadPoolExecutor(20)}
+                    job_defaults = {
+                        'coalesce': True,  # Prevent duplicate runs
+                        'max_instances': 1,
+                        'misfire_grace_time': 3600
+                    }
+                    cls._instance = BackgroundScheduler(
+                        jobstores=jobstores,
+                        executors=executors,
+                        job_defaults=job_defaults,
+                        timezone=TIMEZONE
+                    )
         return cls._instance
 
 # Create a single scheduler instance
@@ -71,8 +66,6 @@ def send_goal_reminder(goal_id):
         try:
             # Fetch goal from database
             goal = conn.execute("SELECT * FROM goals WHERE id = ?", (goal_id,)).fetchone()
-            logger.info(f"DEBUG: Goal data for ID {goal_id}: {goal}")
-
             if not goal:
                 logger.warning(f"WARNING: No goal found with ID {goal_id}. Skipping reminder.")
                 return
@@ -81,6 +74,14 @@ def send_goal_reminder(goal_id):
                 print(f"INFO: Goal {goal_id} is either completed or already paused.")
                 logger.info(f"INFO: Goal {goal_id} is completed.")
                 return
+            
+            # Check if the last email was sent recently (e.g., within 24 hours)
+            last_email_sent = goal["last_email_sent"]
+            if last_email_sent:
+                last_email_sent_time = datetime.strptime(last_email_sent, "%Y-%m-%d %H:%M:%S")
+                if (datetime.now() - last_email_sent_time).total_seconds() < 86400:  # 24 hours
+                    logger.info(f"INFO: Email already sent within the last 24 hours for goal {goal_id}.")
+                    return
 
             goal_name = goal["goal_name"]
             next_steps = goal["next_steps"]
@@ -132,18 +133,15 @@ def schedule_reminder(goal_id, iteration):
         return
 
     job_id = f"goal_{goal_id}"
+    existing_job = scheduler.get_job(job_id)
+    if existing_job:
+        logger.info(f"DEBUG: Job {job_id} already exists, skipping duplicate scheduling.")
+        return
     
-    # Remove existing job if it exists
-    try:
-        scheduler.remove_job(job_id)
-        logger.info(f"DEBUG: Removed existing job {job_id}")
-    except:
-        logger.info(f"DEBUG: No existing job to remove for {job_id}")
-
     # Add new job with Prague timezone
     try:
         now = datetime.now(TIMEZONE)
-        job = scheduler.add_job(
+        scheduler.add_job(
             func=send_goal_reminder,
             trigger="interval",
             id=job_id,
@@ -152,9 +150,10 @@ def schedule_reminder(goal_id, iteration):
             **interval_args,
             next_run_time=now
         )
-        logger.info(f"DEBUG: Successfully scheduled job {job_id}, next run at: {job.next_run_time}")
+        logger.info(f"DEBUG: Successfully scheduled job {job_id}")
     except Exception as e:
         logger.error(f"ERROR: Failed to schedule job: {e}")
+
 
 def remove_reminder(goal_id):
     """

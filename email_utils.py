@@ -65,7 +65,7 @@ def send_email(to_address, goal_id, goal_name, next_steps):
         smtp.starttls()
 
         print("DEBUG: Logging in...")
-        smtp.login(EMAIL_USERNAME, EMAIL_PASSWORD)  # Issue likely here!
+        smtp.login(EMAIL_USERNAME, EMAIL_PASSWORD)
 
         print("DEBUG: Sending email...")
         smtp.send_message(msg)
