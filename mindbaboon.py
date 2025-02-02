@@ -1,5 +1,4 @@
 # mindbaboon.py
-
 import sqlite3
 import random
 from flask import Flask, render_template, request, redirect, url_for, request, jsonify

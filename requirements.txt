@@ -6,3 +6,4 @@ python-dotenv>=1.0.0
 SQLAlchemy>=2.0.0
 gunicorn
 pytz
+sqlite3

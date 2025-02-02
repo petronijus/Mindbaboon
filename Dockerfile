@@ -33,5 +33,5 @@ RUN mkdir -p /app/data && chmod 777 /app/data && python init_mindbaboon_db.py
 EXPOSE 5000
 
 # Command to run the application
-#CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "mindbaboon:app", "--log-level", "debug", "--access-logfile", "-", "--error-logfile", "-"]
-CMD ["python", "mindbaboon.py"]
+#CMD ["gunicorn", "-w", "1", "-b", "0.0.0.0:5000", "mindbaboon:app", "--log-level", "debug", "--access-logfile", "-", "--error-logfile", "-"]
+#CMD ["python", "mindbaboon.py"]
