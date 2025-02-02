@@ -7,7 +7,6 @@ services:
     volumes:
       - mindbaboon_data:/app/data
     environment:
-      - FLASK_APP=mindbaboon.py
       - FLASK_ENV=developments
       - FLASK_DEBUG=1
       - FLASK_RUN_HOST=0.0.0.0
