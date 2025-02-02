@@ -4,6 +4,7 @@ from email.message import EmailMessage
 from dotenv import load_dotenv
 import os
 import random
+import socket
 import logging
 
 
@@ -30,6 +31,24 @@ print(f"DEBUG: Using SMTP Port: {EMAIL_SMTP_PORT}")
 print(f"DEBUG: Using Email Username: {EMAIL_USERNAME}")
 print(f"DEBUG: Using Email Password: {EMAIL_PASSWORD[:4]}******")  # Masked for security
 
+def get_server_host():
+    """
+    Get the correct host address to use in iteration URLs.
+    """
+    # Use an explicitly set environment variable if available
+    host = os.getenv("SERVER_HOST")
+    
+    if not host or host == "0.0.0.0":  
+        # If no host is defined, attempt to determine dynamically
+        try:
+            host = socket.gethostbyname(socket.gethostname())  # Get container's IP
+        except Exception as e:
+            print(f"Error resolving host IP: {e}")
+            host = "localhost"  # Fallback to localhost
+    
+    return host
+
+
 def format_email_content(goal_name, next_steps, goal_id):
     """
     Format the subject and body of the email for a goal with iteration question.
@@ -41,8 +60,9 @@ def format_email_content(goal_name, next_steps, goal_id):
     except ImportError:
         quote = "Stay motivated and keep pushing forward!"  # Fallback quote
 
-    iteration_url_yes = f"http://127.0.0.1:5000/iteration/{goal_id}?completed=yes"
-    iteration_url_no = f"http://127.0.0.1:5000/iteration/{goal_id}?completed=no"
+    server_host = get_server_host()
+    iteration_url_yes = f"http://{server_host}:5000/iteration/{goal_id}?completed=yes"
+    iteration_url_no = f"http://{server_host}:5000/iteration/{goal_id}?completed=no"
 
     subject = f"Mindbaboon is watching: {goal_name}"
     body = (

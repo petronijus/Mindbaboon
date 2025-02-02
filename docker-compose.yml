@@ -17,6 +17,7 @@ services:
       - EMAIL_USERNAME=you@example.com
       - EMAIL_PASSWORD=***REMOVED***
       - DEFAULT_TO_ADDRESS=you@example.com
+      - SERVER_HOST=192.168.0.101
       - TZ=Europe/Prague
 
 volumes:
