@@ -12,8 +12,10 @@ import logging
 from email_utils import send_email  # Import email utility
 
 # Add after imports
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+if not logger.hasHandlers():
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+    logger.addHandler(logging.StreamHandler())
 
 # Predefined list of motivational goals or quotes
 MOTIVATIONAL_GOALS = [

@@ -1,10 +1,20 @@
 # email_utils.py
-
 import smtplib
 from email.message import EmailMessage
 from dotenv import load_dotenv
 import os
 import random
+import logging
+
+
+# Set up logger and avoid duplicate handlers
+logger = logging.getLogger(__name__)
+if not logger.hasHandlers():
+    logger.setLevel(logging.DEBUG)
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
 # Load environment variables from .env
 load_dotenv()
