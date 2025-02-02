@@ -162,7 +162,6 @@ def remove_reminder(goal_id):
     """
     Remove a previously-scheduled job for the given goal_id.
     """
-    print(f"remove reminder function is here")
     job_id = f"goal_{goal_id}"
     try:
         scheduler.remove_job(job_id)

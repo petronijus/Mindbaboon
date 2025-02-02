@@ -1,8 +1,8 @@
 # Use Python 3.11 as base image
-FROM python:3.12
+FROM python:3.11-slim
 
 # Set timezone
-ENV TZ=Europe/Prague
+ENV TZ="Europe/Prague"
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 
@@ -11,8 +11,8 @@ WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
     ca-certificates \
+    gcc \
     libssl-dev \
     tzdata \
     && rm -rf /var/lib/apt/lists/*
@@ -26,11 +26,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Create data directory and set permissions
-RUN mkdir -p /app/data && chmod 777 /app/data
-
-# Initialize the database
-RUN python init_mindbaboon_db.py
+# Create data directory, set permissions, and initialize the database
+RUN mkdir -p /app/data && chmod 777 /app/data && python init_mindbaboon_db.py
 
 # Expose port
 EXPOSE 5000

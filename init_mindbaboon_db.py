@@ -12,7 +12,6 @@ def initialize_database():
     """
     # Create data directory if it doesn't exist
     data_dir = 'data'
-    # data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
     os.makedirs(data_dir, exist_ok=True)
 
     # Connect to database in data directory
