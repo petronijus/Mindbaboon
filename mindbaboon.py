@@ -36,12 +36,17 @@ app.register_blueprint(iteration_bp)
 
 # 1. Start APScheduler once, near app startup
 def init_scheduler():
+    """Initialize the APScheduler instance"""
     try:
-        logger.debug("Initializing scheduler...")
-        scheduler.start()
-        logger.debug("Scheduler started successfully")
+        logger.debug("Starting scheduler...")
+        if not scheduler.running:
+            scheduler.start()
+            logger.debug("Scheduler started successfully")
+        else:
+            logger.debug("Scheduler already running")
     except Exception as e:
-        logger.error(f"Error starting scheduler: {e}")
+        logger.error(f"Failed to start scheduler: {e}")
+        raise
 
 
 def create_tables():
@@ -226,4 +231,5 @@ def delete_goal():
 if __name__ == "__main__":
     create_tables()
     init_scheduler()
+    logger.info("Starting Flask application...")
     app.run(host='0.0.0.0', port=5000)
