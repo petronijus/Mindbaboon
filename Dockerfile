@@ -34,4 +34,4 @@ EXPOSE 5000
 
 # Command to run the application
 #CMD ["gunicorn", "-w", "1", "-b", "0.0.0.0:5000", "mindbaboon:app", "--log-level", "debug", "--access-logfile", "-", "--error-logfile", "-"]
-#CMD ["python", "mindbaboon.py"]
+CMD ["python", "mindbaboon.py"]
