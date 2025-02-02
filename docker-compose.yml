@@ -17,6 +17,7 @@ services:
       - EMAIL_USERNAME=you@example.com
       - EMAIL_PASSWORD=***REMOVED***
       - DEFAULT_TO_ADDRESS=you@example.com
+      - TZ=Europe/Prague
 
 volumes:
   mindbaboon_data:

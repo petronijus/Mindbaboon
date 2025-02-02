@@ -1,6 +1,11 @@
 # Use Python 3.11 as base image
 FROM python:3.12
 
+# Set timezone
+ENV TZ=Europe/Prague
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+
 # Set working directory
 WORKDIR /app
 
@@ -9,6 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     ca-certificates \
     libssl-dev \
+    tzdata \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first to leverage Docker cache
