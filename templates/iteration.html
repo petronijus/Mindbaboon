@@ -1,38 +1,42 @@
-<h1>{{ goal.goal_name }}</h1>
-<p>{{ goal.goal_description }}</p>
-<p>{{ goal.next_steps }}</p>
+{% extends "base.html" %}
+{% block content %}
+<div class="add-goal-page">
+  <h1>{{ goal.goal_name }}</h1>
+  <p>{{ goal.goal_description }}</p>
+  <p>{{ goal.next_steps }}</p>
 
-<form method="POST">
-  <label>Step completed?</label><br>
-  <input type="radio" name="completed" value="yes" {% if request.args.get('completed') == 'yes' %}checked{% endif %} onclick="updateMessage('yes')"> Yes<br>
-  <input type="radio" name="completed" value="no" {% if request.args.get('completed') == 'no' %}checked{% endif %} onclick="updateMessage('no')"> No<br>
+  <form method="POST" class="form-group-big">
+    <label>Step completed?</label><br>
+    <input type="radio" name="completed" value="yes" {% if request.args.get('completed') == 'yes' %}checked{% endif %} onclick="updateMessage('yes')"> Yes<br>
+    <input type="radio" name="completed" value="no" {% if request.args.get('completed') == 'no' %}checked{% endif %} onclick="updateMessage('no')"> No<br>
 
-  <p id="dynamicMessage">
-    {% if request.args.get('completed') == 'yes' %}
-      Banana!
-    {% elif request.args.get('completed') == 'no' %}
-      Baboon is angry
-    {% endif %}
-  </p>
+    <h1 id="dynamicMessage">
+      {% if request.args.get('completed') == 'yes' %}
+        Banana!
+      {% elif request.args.get('completed') == 'no' %}
+        Baboon is angry
+      {% endif %}
+    </h1>
 
-  <label id="lblWasDone">Write shortly what you did:</label><br>
-  <textarea id="txtWasDone" name="was_done"></textarea><br>
+    <label id="lblWasDone">Write shortly what you did:</label><br>
+    <textarea id="txtWasDone" name="was_done"></textarea><br>
 
-  <label id="lblNextStep">Next Step:</label><br>
-  <textarea id="txtNextStep" name="next_steps">{{ goal.next_steps }}</textarea><br>
+    <label id="lblNextStep">Next Step:</label><br>
+    <textarea id="txtNextStep" name="next_steps">{{ goal.next_steps }}</textarea><br>
 
-  <label id="lblReward">Reward:</label><br>
-  <input type="text" id="txtReward" name="reward" value="{{ goal.reward }}"><br>
+    <label id="lblReward">Reward:</label><br>
+    <input type="text" id="txtReward" name="reward" value="{{ goal.reward }}"><br>
 
-  <label id="lblIteration">Iteration Frequency:</label><br>
-  <select id="selIteration" name="iteration">
-    <option value="week" {% if goal.iteration == 'week' %}selected{% endif %}>Week</option>
-    <option value="2 weeks" {% if goal.iteration == '2 weeks' %}selected{% endif %}>2 Weeks</option>
-    <option value="month" {% if goal.iteration == 'month' %}selected{% endif %}>Month</option>
-  </select><br>
+    <label id="lblIteration">Iteration Frequency:</label><br>
+    <select id="selIteration" name="iteration">
+      <option value="week" {% if goal.iteration == 'week' %}selected{% endif %}>Week</option>
+      <option value="2 weeks" {% if goal.iteration == '2 weeks' %}selected{% endif %}>2 Weeks</option>
+      <option value="month" {% if goal.iteration == 'month' %}selected{% endif %}>Month</option>
+    </select><br>
 
-  <button type="submit" id="btnSave">Save</button>
-</form>
+    <button type="submit" id="btnSave" class="add-goal-button">Save</button>
+  </form>
+</div>
 
 <script>
   function updateMessage(value) {
@@ -69,3 +73,4 @@
     }
   }
 </script>
+{% endblock %}
