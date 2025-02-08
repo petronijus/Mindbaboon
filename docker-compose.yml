@@ -18,8 +18,9 @@ services:
       - DEFAULT_TO_ADDRESS=you@example.com
       - SERVER_HOST=192.168.0.101
       - TZ=Europe/Prague
+    command: sh -c "python init_mindbaboon_db.py"
 
 volumes:
   mindbaboon_data:
 
-command: sh -c "python init_mindbaboon_db.py"
+
