@@ -6,9 +6,12 @@
   <div class="alert alert-success">{{ message }}</div>
 {% endif %}
 
-<p class="motivational-goal">{{ motivational_goal }}</p>
-
-<h2>Your Goals</h2>
+<p class="motivational-goal">
+  {{ motivational_goal }}
+  <button id="add-goal-button" class="hidden">
+    <img src="{{ url_for('static', filename='button.svg') }}" alt="Add Goal">
+  </button>
+</p>
 
 {% if goals %}
   <ul>
@@ -44,4 +47,20 @@
 {% else %}
   <p>No goals yet. <a href="{{ url_for('add_goal') }}">Add one</a>.</p>
 {% endif %}
+
+<script>
+  document.querySelector('.motivational-goal').addEventListener('mouseover', function() {
+    document.getElementById('add-goal-button').classList.remove('hidden');
+  });
+
+  document.querySelector('.motivational-goal').addEventListener('mouseout', function() {
+    document.getElementById('add-goal-button').classList.add('hidden');
+  });
+
+  document.getElementById('add-goal-button').addEventListener('click', function() {
+    window.location.href = "{{ url_for('add_goal') }}";
+  });
+</script>
+
+
 {% endblock %}

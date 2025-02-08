@@ -7,6 +7,9 @@ h1, h2, p, strong, em, a {
 h1 {
   font-size: 4rem;
 }
+h2 {
+  font-size: 3rem;
+}
 /* Specific to links */
 a {
   text-decoration: none;
@@ -19,13 +22,17 @@ a:hover {
 
 .motivational-goal {
   font-family: "crete", serif;
-  font-size: 1.5rem;
+  font-size: 5rem;
   font-weight: 400;
-  color: #555;
+  color: #e6e6e6;
   margin-bottom: 20px;
-  text-align: center;
+  text-align: left;
+  position: relative;
 }
 
+.motivational-goal:hover #add-goal-button {
+  opacity: 1;
+}
 
 /* Overall page container */
 .add-goal-page {
@@ -155,4 +162,19 @@ a:hover {
 
 .visible {
     display: block;
+}
+
+#add-goal-button {
+    position: absolute;
+    left: 50%;
+    background: none;
+    border: none;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 1s ease;
+}
+
+#add-goal-button img {
+    width: 30%;
+    height: 30%;
 }
