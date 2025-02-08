@@ -21,3 +21,5 @@ services:
 
 volumes:
   mindbaboon_data:
+
+command: sh -c "python init_mindbaboon_db.py"
