@@ -27,7 +27,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Create data directory, set permissions, and initialize the database
-RUN mkdir -p /app/data && chmod 777 /app/data && python init_mindbaboon_db.py
+RUN mkdir -p /app/data && chmod 777 /app/data
+
+# Ensure the database is initialized
+RUN python init_mindbaboon_db.py
 
 # Expose port
 EXPOSE 5000
