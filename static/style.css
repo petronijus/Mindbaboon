@@ -1,8 +1,35 @@
+/* Ensure the footer stays at the bottom of the page */
+html, body {
+  height: 100%;
+  padding-left: 20px;
+  padding-top: 0px;
+  padding-bottom: 0px;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1;
+}
+
+footer {
+  color: #fff;
+  text-align: left;
+  padding: 10px 0;
+}
+
+
 /* General text styles for index.html */
-h1, h2, p, strong, em, a {
+h1, h2, p, em, a {
   font-family: "crete", serif;
   font-weight: 400;
-  color: #333; /* Adjust color as needed */
+  color: #000; /* Adjust color as needed */
+}
+strong {
+  font-weight: 700;
 }
 h1 {
   font-size: 4rem;
@@ -20,6 +47,22 @@ a:hover {
   color: #999; /* Hover effect */
 }
 
+/* Style for unordered lists */
+ul {
+  list-style-type: none; /* Use disc bullets */
+  margin: 0; /* Add some margin above and below the list */
+  padding-left: 0; /* Add some padding to the left */
+}
+
+/* Style for list items */
+ul li {
+  font-family: "crete", serif; /* Use the same font as other text */
+  font-size: 1.1rem; /* Adjust the font size */
+  color: #333; /* Set the text color */
+  margin-bottom: 10px; /* Add some space between list items */
+}
+
+
 .motivational-goal {
   font-family: "crete", serif;
   font-size: 5rem;
@@ -28,11 +71,30 @@ a:hover {
   margin-bottom: 20px;
   text-align: left;
   position: relative;
+  line-height: 1.1;
+  padding-bottom: 50px;
 }
 
 .motivational-goal:hover #add-goal-button {
   opacity: 1;
 }
+
+.goals {
+  display: flex;
+  flex-wrap: wrap; /* Allow items to wrap to the next line */
+  gap: 20px; /* Add some space between items */
+}
+
+.goals li {
+  font-size: 2em;
+  font-family: crete, serif;
+  font-weight: 700;
+  font-style: normal;
+  width: 400px;
+}
+.goals li p {
+  font-weight: 700;
+  }
 
 /* Overall page container */
 .add-goal-page {
@@ -72,6 +134,11 @@ a:hover {
   border: none;
   border-bottom: 1px solid #555; /* a mid-gray line */
   margin-bottom: 30px;
+}
+
+hr {
+  border: none;
+  border-top: 2px solid black;
 }
 
 /* Form groups for single-line inputs */
@@ -178,3 +245,5 @@ a:hover {
     width: 30%;
     height: 30%;
 }
+
+
