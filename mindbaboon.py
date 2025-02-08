@@ -10,6 +10,9 @@ from iteration import iteration_bp
 import logging
 from email_utils import send_email  # Import email utility
 
+VERSION = "0.9.0"
+
+
 # Add after imports
 logger = logging.getLogger(__name__)
 if not logger.hasHandlers():
@@ -91,10 +94,7 @@ def index():
     goals = conn.execute("SELECT * FROM goals").fetchall()
     conn.close()
     random_goal = random.choice(MOTIVATIONAL_GOALS)
-    return render_template("index.html", goals=goals, motivational_goal=random_goal, message=message)
-
-
-    return render_template("index.html", goals=goals, motivational_goal=random_goal)
+    return render_template("index.html", goals=goals, motivational_goal=random_goal, message=message, version=VERSION)
 
 @app.route("/add", methods=["GET", "POST"])
 def add_goal():
@@ -148,7 +148,7 @@ def add_goal():
 
         return redirect(url_for("index"))
 
-    return render_template("add.html")
+    return render_template("add.html", version=VERSION)
 
 
 # -- Edit an Existing Goal --
@@ -203,7 +203,7 @@ def edit_goal(goal_id):
         return redirect(url_for("index"))
 
     conn.close()
-    return render_template("edit.html", goal=goal)
+    return render_template("edit.html", goal=goal, version=VERSION)
 
 # -- Delete a Goal --
 @app.route('/delete_goal', methods=['POST'])
@@ -246,7 +246,7 @@ def settings():
         return redirect(url_for("index", message="Settings saved successfully!"))
 
     current_email = get_setting("default_email") or "example@domain.com"
-    return render_template("settings.html", current_email=current_email)
+    return render_template("settings.html", current_email=current_email, version=VERSION)
 
 
 
