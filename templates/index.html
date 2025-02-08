@@ -1,6 +1,11 @@
 {% extends "base.html" %}
 
 {% block content %}
+
+{% if message %}
+  <div class="alert alert-success">{{ message }}</div>
+{% endif %}
+
 <p class="motivational-goal">{{ motivational_goal }}</p>
 
 <h2>Your Goals</h2>

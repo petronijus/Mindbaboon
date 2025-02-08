@@ -65,6 +65,16 @@ def initialize_database():
         );
     """)
 
+    # Create the settings table
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS settings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            key TEXT NOT NULL UNIQUE,
+            value TEXT
+        );
+    """)
+
+
     # Add index for iteration_id in iteration_history
     conn.execute("CREATE INDEX IF NOT EXISTS idx_iteration_history_iteration_id ON iteration_history (iteration_id);")
 

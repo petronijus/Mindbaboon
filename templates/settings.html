@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Settings</h2>
+  <form method="POST">
+    <div class="form-group">
+      <label for="email_address">Default Email Address for Notifications</label>
+      <input
+        type="email"
+        id="email_address"
+        name="email_address"
+        value="{{ current_email }}"
+        required
+      />
+    </div>
+    <button type="submit" class="save-button">Save</button>
+  </form>
+{% endblock %}

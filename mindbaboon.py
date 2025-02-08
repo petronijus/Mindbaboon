@@ -5,7 +5,7 @@ from flask import Flask, render_template, request, redirect, url_for, request, j
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 import os
-from database import get_db_connection
+from database import get_db_connection, get_setting, set_setting
 from iteration import iteration_bp
 import logging
 from email_utils import send_email  # Import email utility
@@ -15,6 +15,12 @@ logger = logging.getLogger(__name__)
 if not logger.hasHandlers():
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
     logger.addHandler(logging.StreamHandler())
+
+# Load email from database and set it in environment variables
+default_email = get_setting("default_email")
+if default_email:
+    os.environ["DEFAULT_TO_ADDRESS"] = default_email
+
 
 # Predefined list of motivational goals or quotes
 MOTIVATIONAL_GOALS = [
@@ -80,11 +86,13 @@ def create_tables():
 # -- Index (List All Goals) --
 @app.route("/")
 def index():
+    message = request.args.get("message")  # Get the message from the query parameter
     conn = get_db_connection()
     goals = conn.execute("SELECT * FROM goals").fetchall()
     conn.close()
-    # Pick a random motivational goal
     random_goal = random.choice(MOTIVATIONAL_GOALS)
+    return render_template("index.html", goals=goals, motivational_goal=random_goal, message=message)
+
 
     return render_template("index.html", goals=goals, motivational_goal=random_goal)
 
@@ -227,6 +235,21 @@ def delete_goal():
     
     # Redirect back to the index page
     return redirect(url_for("index"))
+
+@app.route("/settings", methods=["GET", "POST"])
+def settings():
+    if request.method == "POST":
+        email_address = request.form["email_address"]
+        set_setting("default_email", email_address)
+        os.environ["DEFAULT_TO_ADDRESS"] = email_address
+        # Redirect to the homepage with a success message
+        return redirect(url_for("index", message="Settings saved successfully!"))
+
+    current_email = get_setting("default_email") or "example@domain.com"
+    return render_template("settings.html", current_email=current_email)
+
+
+
 
 # Send startup email
 def send_startup_email():
