@@ -246,4 +246,22 @@ hr {
     height: 30%;
 }
 
+.progress-bar-container {
+  width: 100%;
+  background-color: #b4b4b4;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-top: 10px;
+  height: 4px;
+}
 
+.progress-bar {
+  height: 20px;
+  background-color: #000000;
+  height: 4px;
+  transition: width 0.5s ease;
+}
+
+.progress-bar.paused {
+  background-color: red;  /* Red color for paused goals */
+}

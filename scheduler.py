@@ -1,10 +1,11 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.executors.pool import ThreadPoolExecutor
-from datetime import datetime
+from datetime import datetime, timedelta
 import sqlite3
 import os
 from email_utils import send_email  # Import the email utility
+from config import ITERATION_INTERVALS, VERSION
 import threading
 from database import get_db_connection
 import pytz
@@ -101,7 +102,13 @@ def send_goal_reminder(goal_id):
                     message
                 )
                 
+                # Update last_reminder_at after a successful email send
+                now = datetime.now(TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')
+                conn.execute("UPDATE goals SET last_reminder_at = ? WHERE id = ?", (now, goal_id))
+                conn.commit()
 
+                logger.info(f"DEBUG: Email sent for goal: '{goal_name}', last_reminder_at updated to {now}")
+        
                 # Mark goal as paused only after email successfully sends
                 conn.execute("UPDATE goals SET is_paused = 1 WHERE id = ?", (goal_id,))
                 conn.commit()
@@ -119,18 +126,23 @@ def send_goal_reminder(goal_id):
             conn.close()
             logger.info(f"=== send_goal_reminder END for goal_id: {goal_id} ===")
 
+def get_next_run_for_goal(goal_id):
+    """Fetch the next run time for a specific goal from APScheduler's jobs table."""
+    conn = get_db_connection()
+    job_id = f"goal_{goal_id}"
+    result = conn.execute("SELECT next_run_time FROM apscheduler_jobs WHERE id = ?", (job_id,)).fetchone()
+    conn.close()
+
+    if result and result["next_run_time"]:
+        # APScheduler stores next_run_time as a UNIX timestamp (float), convert it to datetime
+        return datetime.fromtimestamp(result["next_run_time"], TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')
+    return None
+
+
 def schedule_reminder(goal_id, iteration):
-    """
-    Schedule or update a recurring APScheduler job.
-    """
     logger.info(f"schedule reminder function is here for goal_id: {goal_id}")
     
-    interval_args = {
-        "week": {"seconds": 30},
-        "2 weeks": {"weeks": 2},
-        "month": {"weeks": 4},
-    }.get(iteration, None)
-
+    interval_args = ITERATION_INTERVALS.get(iteration)
     if not interval_args:
         logger.warning(f"WARNING: Invalid iteration value: {iteration}")
         return
@@ -141,9 +153,10 @@ def schedule_reminder(goal_id, iteration):
         logger.info(f"DEBUG: Job {job_id} already exists, skipping duplicate scheduling.")
         return
     
-    # Add new job with Prague timezone
     try:
         now = datetime.now(TIMEZONE)
+        next_run_time = now + timedelta(**interval_args)
+
         scheduler.add_job(
             func=send_goal_reminder,
             trigger="interval",
@@ -154,8 +167,17 @@ def schedule_reminder(goal_id, iteration):
             next_run_time=now
         )
         logger.info(f"DEBUG: Successfully scheduled job {job_id}")
+
+        conn = get_db_connection()
+        conn.execute("INSERT INTO iteration_history (iteration_id, status, next_run) VALUES (?, ?, ?)",
+                     (goal_id, "Scheduled", next_run_time.strftime('%Y-%m-%d %H:%M:%S')))
+        conn.execute("UPDATE goals SET last_reminder_at = ? WHERE id = ?",
+                     (now.strftime('%Y-%m-%d %H:%M:%S'), goal_id))
+        conn.commit()
+        conn.close()
     except Exception as e:
         logger.error(f"ERROR: Failed to schedule job: {e}")
+
 
 
 def remove_reminder(goal_id):
@@ -167,3 +189,34 @@ def remove_reminder(goal_id):
         scheduler.remove_job(job_id)
     except Exception:
         pass
+
+
+def print_next_run_times():
+    """
+    Print the next run times for all scheduled jobs.
+    """
+    jobs = scheduler.get_jobs()
+    for job in jobs:
+        next_run_time = job.next_run_time
+        logger.info(f"Job {job.id} next run time: {next_run_time}")
+        print(f"WWWWOHHHOOOOOOOO Job {job.id} next run time: {next_run_time}")
+
+def schedule_print_next_run_times():
+    """
+    Schedule the print_next_run_times function to run periodically.
+    """
+    scheduler.add_job(
+        func=print_next_run_times,
+        trigger="interval",
+        id="print_next_run_times",
+        minutes=1,  # Adjust the interval as needed
+        replace_existing=True,
+        next_run_time=datetime.now(TIMEZONE)
+    )
+
+# Call this function to schedule the periodic printing
+schedule_print_next_run_times()
+
+if __name__ == "__main__":
+    scheduler.start()
+    logger.info("Scheduler started")

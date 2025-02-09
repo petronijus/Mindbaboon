@@ -60,6 +60,7 @@ def initialize_database():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             iteration_id INTEGER NOT NULL,
             status TEXT NOT NULL,
+            next_run TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (iteration_id) REFERENCES goals (id) ON DELETE CASCADE
         );

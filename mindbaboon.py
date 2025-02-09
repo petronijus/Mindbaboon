@@ -2,15 +2,15 @@
 import sqlite3
 import random
 from flask import Flask, render_template, request, redirect, url_for, request, jsonify
-from datetime import datetime
+from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 import os
 from database import get_db_connection, get_setting, set_setting
 from iteration import iteration_bp
 import logging
 from email_utils import send_email  # Import email utility
-
-VERSION = "0.9.0"
+from scheduler import get_next_run_for_goal
+from config import ITERATION_INTERVALS, VERSION
 
 
 # Add after imports
@@ -89,11 +89,44 @@ def create_tables():
 # -- Index (List All Goals) --
 @app.route("/")
 def index():
-    message = request.args.get("message")  # Get the message from the query parameter
+    message = request.args.get("message")
     conn = get_db_connection()
-    goals = conn.execute("SELECT * FROM goals").fetchall()
+    goals = conn.execute("""
+        SELECT g.*, ih.next_run
+        FROM goals g
+        LEFT JOIN (
+            SELECT iteration_id, MAX(next_run) as next_run
+            FROM iteration_history
+            GROUP BY iteration_id
+        ) ih ON g.id = ih.iteration_id
+    """).fetchall()
     conn.close()
+
     random_goal = random.choice(MOTIVATIONAL_GOALS)
+
+    # Convert sqlite3.Row objects to dictionaries
+    goals = [dict(goal) for goal in goals]
+
+    # Calculate progress for each goal based on the interval between last_email_sent and next_run
+    for goal in goals:
+        last_reminder_at = goal.get('last_reminder_at')
+        next_run = get_next_run_for_goal(goal['id'])  # Fetch the next run from APScheduler
+
+        if last_reminder_at and next_run:
+            last_reminder = datetime.strptime(last_reminder_at, '%Y-%m-%d %H:%M:%S')
+            next_run_time = datetime.strptime(next_run, '%Y-%m-%d %H:%M:%S')
+            total_time = (next_run_time - last_reminder).total_seconds()
+            remaining_time = (next_run_time - datetime.now()).total_seconds()
+            progress = max(0, min(100, ((total_time - remaining_time) / total_time) * 100))
+            goal['progress'] = progress
+        else:
+            goal['progress'] = 0  # Default progress if no reminder or next run
+
+        goal['next_run'] = next_run  # Add the next run to the goal for display
+
+
+
+
     return render_template("index.html", goals=goals, motivational_goal=random_goal, message=message, version=VERSION)
 
 @app.route("/add", methods=["GET", "POST"])

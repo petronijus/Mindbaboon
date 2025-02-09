@@ -1,5 +1,6 @@
+from config import ITERATION_INTERVALS, VERSION
 from flask import Blueprint, request, render_template, redirect, url_for, jsonify
-from datetime import datetime
+from datetime import datetime, timedelta
 import sqlite3
 import os
 from database import get_db_connection
@@ -38,13 +39,16 @@ def iteration_view(goal_id):
         next_steps = request.form.get("next_steps", goal["next_steps"])  # Goal-specific
         reward = request.form.get("reward", goal["reward"])  # Goal-specific
         
+        # Calculate the next_run using ITERATION_INTERVALS
+        interval_args = ITERATION_INTERVALS.get(goal["iteration"])
+        next_run_minutes = interval_args["minutes"] if interval_args else 2  # Default to 2 minutes
+        next_run = datetime.now(TIMEZONE) + timedelta(minutes=next_run_minutes)
 
-        # Save to iteration_history if `completed` is updated
-        if completed:
-            conn.execute("""
-                INSERT INTO iteration_history (iteration_id, status, updated_at)
-                VALUES (?, ?, ?)
-            """, (goal_id, completed, datetime.now(TIMEZONE)))
+        conn.execute("""
+            INSERT INTO iteration_history (iteration_id, status, next_run, updated_at)
+            VALUES (?, ?, ?, ?)
+        """, (goal_id, completed, next_run.strftime('%Y-%m-%d %H:%M:%S'), datetime.now(TIMEZONE)))
+
 
         # Update goal-specific fields in goals table
         conn.execute("""
