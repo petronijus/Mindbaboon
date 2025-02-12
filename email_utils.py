@@ -75,6 +75,12 @@ def format_email_content(goal_name, next_steps, goal_id):
     return subject, body
 
 
+def generate_confirmation_email_body(goal_name, next_steps):
+    """
+    Generate the body of the confirmation email for a new goal.
+    """
+    return f"New goal '{goal_name}' has been created successfully. Next steps: {next_steps}"
+
 
 def send_email(to_address, goal_id, goal_name, next_steps):
     """
@@ -104,3 +110,4 @@ def send_email(to_address, goal_id, goal_name, next_steps):
         smtp.quit()
     except Exception as e:
         print(f"DEBUG: Email failed to send. Error: {e}")
+

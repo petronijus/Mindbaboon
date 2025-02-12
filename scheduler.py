@@ -4,12 +4,14 @@ from apscheduler.executors.pool import ThreadPoolExecutor
 from datetime import datetime, timedelta
 import sqlite3
 import os
-from email_utils import send_email  # Import the email utility
+from email_utils import send_email, generate_confirmation_email_body  # Removed send_confirmation_email import
 from config import ITERATION_INTERVALS, VERSION
 import threading
 from database import get_db_connection
 import pytz
 import logging
+import smtplib
+from email.message import EmailMessage
 
 # Define Prague timezone
 TIMEZONE = pytz.timezone('Europe/Prague')
@@ -139,6 +141,53 @@ def get_next_run_for_goal(goal_id):
     return None
 
 
+# Retrieve SMTP credentials from environment variables (for confirmation emails)
+EMAIL_SMTP_SERVER = os.getenv("EMAIL_SMTP_SERVER", "smtp.gmail.com")
+EMAIL_SMTP_PORT = int(os.getenv("EMAIL_SMTP_PORT", 587))
+EMAIL_USERNAME = os.getenv("EMAIL_USERNAME")
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
+
+def send_confirmation_email(goal_id):
+    """
+    Send a confirmation email when a new goal is created.
+    Uses inline SMTP logic and takes the body content from email_utils.
+    """
+    logger.info(f"=== send_confirmation_email START for goal_id: {goal_id} ===")
+    conn = get_db_connection()
+    try:
+        goal = conn.execute("SELECT * FROM goals WHERE id = ?", (goal_id,)).fetchone()
+        if not goal:
+            logger.warning(f"WARNING: No goal found with ID {goal_id}. Skipping confirmation email.")
+            return
+
+        goal_name = goal["goal_name"]
+        next_steps = goal["next_steps"]
+
+        logger.info(f"DEBUG: Sending confirmation email for goal: '{goal_name}'")
+        subject = f"Goal Created: {goal_name}"
+        body = generate_confirmation_email_body(goal_name, next_steps)
+
+        msg = EmailMessage()
+        msg["From"] = EMAIL_USERNAME
+        msg["To"] = os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com")
+        msg["Subject"] = subject
+        msg.set_content(body)
+
+        try:
+            smtp = smtplib.SMTP(EMAIL_SMTP_SERVER, EMAIL_SMTP_PORT)
+            smtp.starttls()
+            smtp.login(EMAIL_USERNAME, EMAIL_PASSWORD)
+            smtp.send_message(msg)
+            smtp.quit()
+            logger.info(f"DEBUG: Confirmation email sent for goal: '{goal_name}'")
+        except Exception as e:
+            logger.error(f"DEBUG: Confirmation email failed to send. Error: {e}")
+    except Exception as email_err:
+        logger.error(f"ERROR: Failed to send confirmation email for goal '{goal_name}': {email_err}")
+    finally:
+        conn.close()
+        logger.info(f"=== send_confirmation_email END for goal_id: {goal_id} ===")
+
 def schedule_reminder(goal_id, iteration):
     logger.info(f"schedule reminder function is here for goal_id: {goal_id}")
     
@@ -164,7 +213,7 @@ def schedule_reminder(goal_id, iteration):
             replace_existing=True,
             kwargs={"goal_id": goal_id},
             **interval_args,
-            next_run_time=now
+            next_run_time=next_run_time
         )
         logger.info(f"DEBUG: Successfully scheduled job {job_id}")
 
@@ -175,10 +224,11 @@ def schedule_reminder(goal_id, iteration):
                      (now.strftime('%Y-%m-%d %H:%M:%S'), goal_id))
         conn.commit()
         conn.close()
+
+        # Send confirmation email without pausing the goal
+        send_confirmation_email(goal_id)
     except Exception as e:
         logger.error(f"ERROR: Failed to schedule job: {e}")
-
-
 
 def remove_reminder(goal_id):
     """

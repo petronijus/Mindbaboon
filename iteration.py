@@ -43,11 +43,14 @@ def iteration_view(goal_id):
         interval_args = ITERATION_INTERVALS.get(goal["iteration"])
         next_run_minutes = interval_args["minutes"] if interval_args else 2  # Default to 2 minutes
         next_run = datetime.now(TIMEZONE) + timedelta(minutes=next_run_minutes)
+        
 
         conn.execute("""
             INSERT INTO iteration_history (iteration_id, status, next_run, updated_at)
             VALUES (?, ?, ?, ?)
         """, (goal_id, completed, next_run.strftime('%Y-%m-%d %H:%M:%S'), datetime.now(TIMEZONE)))
+
+        
 
 
         # Update goal-specific fields in goals table
