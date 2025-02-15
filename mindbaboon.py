@@ -8,8 +8,7 @@ import os
 from database import get_db_connection, get_setting, set_setting
 from iteration import iteration_bp
 import logging
-from email_utils import send_email  # Import email utility
-from scheduler import get_next_run_for_goal
+from scheduler import get_next_run_for_goal, send_email
 from config import ITERATION_INTERVALS, VERSION
 
 
@@ -287,11 +286,16 @@ def settings():
 # Send startup email
 def send_startup_email():
     """Send a startup notification email."""
-    try:
-        send_email(os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com"), 0, "Startup Notification", "Hello, World!")
-        logger.info("Startup email sent successfully.")
-    except Exception as e:
-        logger.error(f"Failed to send startup email: {e}")
+    with app.app_context():
+        try:
+            send_email(
+                "start_email",  # Changed template name to match file: start_email.html
+                os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com"),
+                {"subject": "Startup Notification", "body": "Hello, World!"}
+            )
+            logger.info("Startup email sent successfully.")
+        except Exception as e:
+            logger.error(f"Failed to send startup email: {e}")
 
 # 4. Run the App
 if __name__ == "__main__":

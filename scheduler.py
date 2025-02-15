@@ -1,10 +1,10 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.executors.pool import ThreadPoolExecutor
+from flask import render_template
 from datetime import datetime, timedelta
 import sqlite3
 import os
-from email_utils import send_email, generate_confirmation_email_body  # Removed send_confirmation_email import
 from config import ITERATION_INTERVALS, VERSION
 import threading
 from database import get_db_connection
@@ -12,6 +12,9 @@ import pytz
 import logging
 import smtplib
 from email.message import EmailMessage
+from dotenv import load_dotenv
+import socket
+import random
 
 # Define Prague timezone
 TIMEZONE = pytz.timezone('Europe/Prague')
@@ -58,75 +61,138 @@ class SchedulerManager:
 # Create a single scheduler instance
 scheduler = SchedulerManager.get_scheduler()
 
+# Load environment variables and SMTP credentials
+load_dotenv()
+EMAIL_SMTP_SERVER = os.getenv("EMAIL_SMTP_SERVER", "smtp.gmail.com")
+EMAIL_SMTP_PORT = int(os.getenv("EMAIL_SMTP_PORT", 587))
+EMAIL_USERNAME = os.getenv("EMAIL_USERNAME")
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
+
+# Helper: Get host for iteration URLs
+def get_server_host():
+    host = os.getenv("SERVER_HOST")
+    if not host or host == "0.0.0.0":
+        try:
+            host = socket.gethostbyname(socket.gethostname())
+        except Exception:
+            host = "localhost"
+    return host
+
+def render_email(email_type, context):
+    """
+    Render an email template based on the email type.
+    :param email_type: The name of the template (e.g., "confirmation_email").
+    :param context: A dictionary of variables to pass to the template.
+    :return: subject, body (HTML content)
+    """
+    template_name = f"emails/{email_type}.html"
+    subject = context.get("subject", "Mindbaboon Notification")
+    body = render_template(template_name, **context)
+    return subject, body
+
+# Helper: Format email content for iteration messages
+def format_email_content(goal_name, next_steps, goal_id):
+    try:
+        from mindbaboon import MOTIVATIONAL_GOALS
+        quote = random.choice(MOTIVATIONAL_GOALS)
+    except ImportError:
+        quote = "Stay motivated and keep pushing forward!"
+    server_host = get_server_host()
+    iteration_url_yes = f"http://{server_host}:5000/iteration/{goal_id}?completed=yes"
+    iteration_url_no = f"http://{server_host}:5000/iteration/{goal_id}?completed=no"
+    subject = f"Mindbaboon is watching: {goal_name}"
+    body = (f"{quote}\n\n"
+            f"Goal: {goal_name}\n"
+            f"Next Steps: {next_steps}\n\n"
+            f"Step completed? [Yes]({iteration_url_yes}) | [No]({iteration_url_no})\n\n"
+            f"Keep up the great work!")
+    return subject, body
+
+# Helper: Generate confirmation email body
+def generate_confirmation_email_body(goal_name, next_steps):
+    return f"New goal '{goal_name}' has been created successfully. Next steps: {next_steps}"
+
+# Helper: Send email using SMTP
+def send_email(email_type, to_address, context):
+    """
+    Send an email based on the specified email type.
+    :param email_type: The template name (without .html) for the email body.
+    :param to_address: The recipient's email address.
+    :param context: A dictionary of variables to render in the email.
+    """
+    subject, body = render_email(email_type, context)
+    msg = EmailMessage()
+    msg["From"] = EMAIL_USERNAME
+    msg["To"] = to_address
+    msg["Subject"] = subject
+    msg.set_content(body, subtype='html')  # Set content type to HTML
+    try:
+        with smtplib.SMTP(EMAIL_SMTP_SERVER, EMAIL_SMTP_PORT) as smtp:
+            smtp.starttls()
+            smtp.login(EMAIL_USERNAME, EMAIL_PASSWORD)
+            smtp.send_message(msg)
+        logger.info(f"Email '{email_type}' sent successfully to {to_address}.")
+    except Exception as e:
+        logger.error(f"Failed to send '{email_type}' email to {to_address}: {e}")
+
+# Helper: Send confirmation email using the confirmation_email template
+def send_confirmation_email(goal_id):
+    logger.info(f"=== send_confirmation_email START for goal_id: {goal_id} ===")
+    conn = get_db_connection()
+    try:
+        goal = conn.execute("SELECT * FROM goals WHERE id = ?", (goal_id,)).fetchone()
+        if not goal:
+            logger.warning(f"WARNING: No goal found with ID {goal_id}. Skipping confirmation email.")
+            return
+        context = {
+            "goal_name": goal["goal_name"],
+            "next_steps": goal["next_steps"],
+            "subject": f"Goal Created: {goal['goal_name']}"
+        }
+        send_email(
+            "confirmation_email", 
+            os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com"),
+            context
+        )
+        logger.info(f"Confirmation email sent successfully for goal: '{goal['goal_name']}'")
+    except Exception as e:
+        logger.error(f"Failed to send confirmation email for goal {goal_id}: {e}")
+    finally:
+        conn.close()
+        logger.info(f"=== send_confirmation_email END for goal_id: {goal_id} ===")
+
 def send_goal_reminder(goal_id):
-    """
-    Called by APScheduler job to send an email reminder for a specific goal.
-    Marks the goal as paused only after the email has been sent.
-    If sending fails, it resets is_paused to allow future attempts.
-    """
     logger.info(f"=== send_goal_reminder START for goal_id: {goal_id} ===")
-    print(f"send goal function is here for goal_id: {goal_id}")
-    
-    with SchedulerManager._lock:  
+    # Add application context to use Flask functionalities
+    from mindbaboon import app  # Import here to avoid circular dependency issues
+    with app.app_context():
         conn = get_db_connection()
         try:
-            # Fetch goal from database
             goal = conn.execute("SELECT * FROM goals WHERE id = ?", (goal_id,)).fetchone()
             if not goal:
-                logger.warning(f"WARNING: No goal found with ID {goal_id}. Skipping reminder.")
+                logger.warning(f"No goal found with ID {goal_id}. Skipping reminder.")
                 return
-
             if goal["completed"] == 1 or goal["is_paused"] == 1:
-                print(f"INFO: Goal {goal_id} is either completed or already paused.")
-                logger.info(f"INFO: Goal {goal_id} is completed.")
+                logger.info(f"Goal {goal_id} is either completed or already paused.")
                 return
-            
-            # Check if the last email was sent recently (e.g., within 24 hours)
-            last_email_sent = goal["last_email_sent"]
-            if last_email_sent:
-                last_email_sent_time = datetime.strptime(last_email_sent, "%Y-%m-%d %H:%M:%S")
-                if (datetime.now() - last_email_sent_time).total_seconds() < 86400:  # 24 hours
-                    logger.info(f"INFO: Email already sent within the last 24 hours for goal {goal_id}.")
-                    return
-
-            goal_name = goal["goal_name"]
-            next_steps = goal["next_steps"]
-
-            logger.info(f"DEBUG: Attempting to send reminder for goal: '{goal_name}'")
-
-            # Prepare email message
-            message = next_steps if next_steps else "Please update the next steps to resume scheduling."
-            try:
-                send_email(
-                    os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com"),
-                    goal_id,
-                    goal_name,
-                    message
-                )
-                
-                # Update last_reminder_at after a successful email send
-                now = datetime.now(TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')
-                conn.execute("UPDATE goals SET last_reminder_at = ? WHERE id = ?", (now, goal_id))
-                conn.commit()
-
-                logger.info(f"DEBUG: Email sent for goal: '{goal_name}', last_reminder_at updated to {now}")
-        
-                # Mark goal as paused only after email successfully sends
-                conn.execute("UPDATE goals SET is_paused = 1 WHERE id = ?", (goal_id,))
-                conn.commit()
-                print(f"DEBUG: Email sent for goal: '{goal_name}'")
-                logger.info(f"DEBUG: Email sent for goal: '{goal_name}'")
-            except Exception as email_err:
-                print(f"ERROR: Failed to send email for goal '{goal_name}': {email_err}")
-                # Ensure the goal is not paused so that the reminder can be retried later
-                conn.execute("UPDATE goals SET is_paused = 0 WHERE id = ?", (goal_id,))
-                conn.commit()
-                logger.error(f"ERROR: Failed to send email for goal '{goal_name}': {email_err}")
-        except Exception as outer_err:
-            logger.error(f"ERROR in send_goal_reminder: {outer_err}")
+            context = {
+                "goal_name": goal["goal_name"],
+                "next_steps": goal["next_steps"],
+                "iteration_url_yes": f"http://{get_server_host()}:5000/iteration/{goal_id}?completed=yes",
+                "iteration_url_no": f"http://{get_server_host()}:5000/iteration/{goal_id}?completed=no",
+                "quote": "Keep pushing forward!"
+            }
+            send_email("normal_email", os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com"), context)
+            now = datetime.now(TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')
+            conn.execute("UPDATE goals SET last_reminder_at = ? WHERE id = ?", (now, goal_id))
+            conn.execute("UPDATE goals SET is_paused = 1 WHERE id = ?", (goal_id,))
+            conn.commit()
+            logger.info(f"Reminder sent for goal: '{goal['goal_name']}'")
+        except Exception as e:
+            logger.error(f"Error in send_goal_reminder: {e}")
         finally:
             conn.close()
-            logger.info(f"=== send_goal_reminder END for goal_id: {goal_id} ===")
+    logger.info(f"=== send_goal_reminder END for goal_id: {goal_id} ===")
 
 def get_next_run_for_goal(goal_id):
     """Fetch the next run time for a specific goal from APScheduler's jobs table."""
@@ -147,47 +213,6 @@ EMAIL_SMTP_PORT = int(os.getenv("EMAIL_SMTP_PORT", 587))
 EMAIL_USERNAME = os.getenv("EMAIL_USERNAME")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 
-def send_confirmation_email(goal_id):
-    """
-    Send a confirmation email when a new goal is created.
-    Uses inline SMTP logic and takes the body content from email_utils.
-    """
-    logger.info(f"=== send_confirmation_email START for goal_id: {goal_id} ===")
-    conn = get_db_connection()
-    try:
-        goal = conn.execute("SELECT * FROM goals WHERE id = ?", (goal_id,)).fetchone()
-        if not goal:
-            logger.warning(f"WARNING: No goal found with ID {goal_id}. Skipping confirmation email.")
-            return
-
-        goal_name = goal["goal_name"]
-        next_steps = goal["next_steps"]
-
-        logger.info(f"DEBUG: Sending confirmation email for goal: '{goal_name}'")
-        subject = f"Goal Created: {goal_name}"
-        body = generate_confirmation_email_body(goal_name, next_steps)
-
-        msg = EmailMessage()
-        msg["From"] = EMAIL_USERNAME
-        msg["To"] = os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com")
-        msg["Subject"] = subject
-        msg.set_content(body)
-
-        try:
-            smtp = smtplib.SMTP(EMAIL_SMTP_SERVER, EMAIL_SMTP_PORT)
-            smtp.starttls()
-            smtp.login(EMAIL_USERNAME, EMAIL_PASSWORD)
-            smtp.send_message(msg)
-            smtp.quit()
-            logger.info(f"DEBUG: Confirmation email sent for goal: '{goal_name}'")
-        except Exception as e:
-            logger.error(f"DEBUG: Confirmation email failed to send. Error: {e}")
-    except Exception as email_err:
-        logger.error(f"ERROR: Failed to send confirmation email for goal '{goal_name}': {email_err}")
-    finally:
-        conn.close()
-        logger.info(f"=== send_confirmation_email END for goal_id: {goal_id} ===")
-
 def schedule_reminder(goal_id, iteration):
     logger.info(f"schedule reminder function is here for goal_id: {goal_id}")
     
@@ -198,7 +223,7 @@ def schedule_reminder(goal_id, iteration):
 
     job_id = f"goal_{goal_id}"
     existing_job = scheduler.get_job(job_id)
-    if existing_job:
+    if (existing_job):
         logger.info(f"DEBUG: Job {job_id} already exists, skipping duplicate scheduling.")
         return
     
