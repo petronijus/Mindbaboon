@@ -6,6 +6,7 @@ import os
 from database import get_db_connection
 import pytz
 import logging
+from config import ITERATION_INTERVALS, VERSION
 
 # Set up logger and avoid duplicate handlers
 logger = logging.getLogger(__name__)
@@ -71,7 +72,7 @@ def iteration_view(goal_id):
         return redirect(url_for("index"))
 
     conn.close()
-    return render_template("iteration.html", goal=goal)
+    return render_template("iteration.html", goal=goal, version=VERSION)  # Updated line to pass version
 
 @iteration_bp.route('/iteration/<int:iteration_id>/history', methods=['GET'])
 def get_iteration_history(iteration_id):
