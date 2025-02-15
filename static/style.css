@@ -256,7 +256,6 @@ hr {
 }
 
 .progress-bar {
-  height: 20px;
   background-color: #000000;
   height: 4px;
   transition: width 0.5s ease;

@@ -1,7 +1,7 @@
 # mindbaboon.py
 import sqlite3
 import random
-from flask import Flask, render_template, request, redirect, url_for, request, jsonify
+from flask import Flask, render_template, request, redirect, url_for, jsonify  # Removed duplicate "request"
 from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 import os

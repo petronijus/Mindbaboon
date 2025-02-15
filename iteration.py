@@ -6,7 +6,6 @@ import os
 from database import get_db_connection
 import pytz
 import logging
-from config import ITERATION_INTERVALS, VERSION
 
 # Set up logger and avoid duplicate handlers
 logger = logging.getLogger(__name__)
