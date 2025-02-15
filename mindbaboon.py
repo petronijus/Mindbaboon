@@ -252,6 +252,9 @@ def delete_goal():
         # Delete history associated with the goal
         cursor.execute("DELETE FROM goal_history WHERE goal_id = ?", (goal_id,))
 
+        # Delete iteration history associated with the goal
+        cursor.execute("DELETE FROM iteration_history WHERE iteration_id = ?", (goal_id,))
+
         # Delete the goal itself
         cursor.execute("DELETE FROM goals WHERE id = ?", (goal_id,))
 
