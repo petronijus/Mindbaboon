@@ -1,4 +1,4 @@
-VERSION = "0.9.3"
+VERSION = "0.9.5"
 ITERATION_INTERVALS = {
     "week": {"minutes": 2},
     "2 weeks": {"minutes": 15},
