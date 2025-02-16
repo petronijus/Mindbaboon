@@ -63,7 +63,7 @@ ul li {
 }
 
 
-.motivational-goal {
+.motivational-quote {
   font-family: "crete", serif;
   font-size: 5rem;
   font-weight: 400;
@@ -75,7 +75,7 @@ ul li {
   padding-bottom: 50px;
 }
 
-.motivational-goal:hover #add-goal-button {
+.motivational-quote:hover #add-goal-button {
   opacity: 1;
 }
 

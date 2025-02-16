@@ -9,7 +9,7 @@ from database import get_db_connection, get_setting, set_setting
 from iteration import iteration_bp
 import logging
 from scheduler import get_next_run_for_goal, send_email
-from config import ITERATION_INTERVALS, VERSION
+from config import ITERATION_INTERVALS, VERSION, MOTIVATIONAL_QUOTES
 
 
 # Add after imports
@@ -23,22 +23,12 @@ default_email = get_setting("default_email")
 if default_email:
     os.environ["DEFAULT_TO_ADDRESS"] = default_email
 
-
-# Predefined list of motivational goals or quotes
-MOTIVATIONAL_GOALS = [
-    "Push yourself, because no one else is going to do it for you.",
-    "Great things never come from comfort zones.",
-    "Dream it. Believe it. Build it.",
-    "Don't stop until you're proud.",
-    "Your limitation—it's only your imagination.",
-    "Do something today that your future self will thank you for."
-]
-
 # Import the scheduler logic
 from scheduler import (
     scheduler,           # The BackgroundScheduler instance
     schedule_reminder,   # Function to add/replace a per-goal job
-    remove_reminder      # Function to remove the per-goal job
+    remove_reminder,     # Function to remove the per-goal job
+    send_startup_email   # Import the startup email function
 )
 
 app = Flask(__name__)
@@ -101,7 +91,7 @@ def index():
     """).fetchall()
     conn.close()
 
-    random_goal = random.choice(MOTIVATIONAL_GOALS)
+    random_quote = random.choice(MOTIVATIONAL_QUOTES)
 
     # Convert sqlite3.Row objects to dictionaries
     goals = [dict(goal) for goal in goals]
@@ -126,7 +116,7 @@ def index():
 
 
 
-    return render_template("index.html", goals=goals, motivational_goal=random_goal, message=message, version=VERSION)
+    return render_template("index.html", goals=goals, motivational_quote=random_quote, message=message, version=VERSION)
 
 @app.route("/add", methods=["GET", "POST"])
 def add_goal():
@@ -286,24 +276,10 @@ def settings():
 
 
 
-# Send startup email
-def send_startup_email():
-    """Send a startup notification email."""
-    with app.app_context():
-        try:
-            send_email(
-                "start_email",  # Changed template name to match file: start_email.html
-                os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com"),
-                {"subject": "Startup Notification", "body": "Hello, World!"}
-            )
-            logger.info("Startup email sent successfully.")
-        except Exception as e:
-            logger.error(f"Failed to send startup email: {e}")
-
 # 4. Run the App
 if __name__ == "__main__":
     create_tables()
     init_scheduler()
-    send_startup_email()
+    send_startup_email()  # call the scheduler.py version
     logger.info("Starting Flask application...")
     app.run(host='0.0.0.0', port=5000)

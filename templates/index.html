@@ -6,8 +6,8 @@
   <div class="alert alert-success">{{ message }}</div>
 {% endif %}
 
-<p class="motivational-goal">
-  {{ motivational_goal }}
+<p class="motivational-quote">
+  {{ motivational_quote }}
   <button id="add-goal-button" class="hidden">
     <img src="{{ url_for('static', filename='button.svg') }}" alt="Add Goal">
   </button>
@@ -39,17 +39,14 @@
         </a>
         <!-- Existing progress bar in index.html -->
         <div class="progress-bar-container">
-          <div 
-            class="progress-bar {% if goal.is_paused == 1 %}paused{% endif %}" 
-            style="width: {{ goal.progress }}%;"
-          ></div>
+          <div class="progress-bar{% if goal.is_paused == 1 %} paused{% endif %}" style="width: {{ goal.progress }}%;"></div>
           <span>{{ goal.progress | round }}% complete</span>
         </div>
         
 
         <!-- Delete form -->
         <form method="POST" action="/delete_goal">
-          <input type="hidden" name="goal_id" value="{{ goal.id }}" style="display:inline">
+          <input type="hidden" name="goal_id" value="{{ goal['id'] }}" style="display:inline">
           <button type="submit">Delete</button>
         </form>
       </li>
@@ -60,11 +57,11 @@
 {% endif %}
 
 <script>
-  document.querySelector('.motivational-goal').addEventListener('mouseover', function() {
+  document.querySelector('.motivational-quote').addEventListener('mouseover', function() {
     document.getElementById('add-goal-button').classList.remove('hidden');
   });
 
-  document.querySelector('.motivational-goal').addEventListener('mouseout', function() {
+  document.querySelector('.motivational-quote').addEventListener('mouseout', function() {
     document.getElementById('add-goal-button').classList.add('hidden');
   });
 

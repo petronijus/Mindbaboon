@@ -14,6 +14,7 @@ from email.message import EmailMessage
 from dotenv import load_dotenv
 import socket
 import random
+import re  # new import for regex
 
 # Define Prague timezone
 TIMEZONE = pytz.timezone('Europe/Prague')
@@ -71,8 +72,13 @@ def get_server_host():
 
 def render_email(email_type, context):
     template_name = f"emails/{email_type}.html"
-    subject = context.get("subject", "Mindbaboon Notification")
+    # Use subject from context if provided, else set default value.
+    subject = context.get("subject", None)
     body = render_template(template_name, **context)
+    # If subject is not provided, try to extract from <title> tag in the template.
+    if subject is None:
+        match = re.search(r'<title>\s*(.*?)\s*</title>', body, re.IGNORECASE | re.DOTALL)
+        subject = match.group(1) if match else "Mindbaboon Notification"
     return subject, body
 
 def send_email(email_type, to_address, context):
@@ -102,7 +108,8 @@ def send_confirmation_email(goal_id):
         context = {
             "goal_name": goal["goal_name"],
             "next_steps": goal["next_steps"],
-            "subject": f"Goal Created: {goal['goal_name']}"
+            "quote": "Keep pushing forward!"
+            # Removed explicit subject to use template's <title> instead
         }
         send_email("confirmation_email", os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com"), context)
         logger.info(f"Confirmation email sent for goal: '{goal['goal_name']}'")
@@ -111,6 +118,18 @@ def send_confirmation_email(goal_id):
     finally:
         conn.close()
         logger.info(f"=== send_confirmation_email END for goal_id: {goal_id} ===")
+
+def send_startup_email():
+    """New function to send a startup email using the email template's title for subject."""
+    from mindbaboon import app  # Avoid circular dependency
+    with app.app_context():
+        context = {
+            "welcome_message": "Welcome to Mindbaboon!",
+            "info": "Your system has started successfully.",
+            "quote": "Keep pushing forward!"
+            # No subject key--it will be taken from the template's <title>
+        }
+        send_email("startup_email", os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com"), context)
 
 def send_goal_reminder(goal_id):
     logger.info(f"=== send_goal_reminder START for goal_id: {goal_id} ===")
