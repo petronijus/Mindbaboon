@@ -85,9 +85,7 @@ ul li {
   font-weight: normal;
 }
 
-.motivational-quote:hover #add-goal-button {
-  opacity: 1;
-}
+
 
 .goals {
   display: flex;
@@ -247,21 +245,6 @@ hr {
   margin-right: 5px;
 }
 
-/* The “Save Goal” button */
-.add-goal-button {
-  font-family: "crete", serif;
-  font-weight: 400;
-  background-color: #333;
-  color: #fff;
-  border: none;
-  padding: 12px 24px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.add-goal-button:hover {
-  background-color: #555;
-}
 
 .hidden {
     display: none;
@@ -277,9 +260,16 @@ hr {
     background: none;
     border: none;
     cursor: pointer;
-    opacity: 0;
+    opacity: 1;
+    visibility: visible;
     transition: opacity 1s ease;
 }
+.motivational-quote:hover #add-goal-button {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 1s ease;
+}
+
 
 #add-goal-button img {
     width: 30%;

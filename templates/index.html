@@ -8,7 +8,7 @@
 
 <p class="motivational-quote">
   {{ motivational_quote }}
-  <button id="add-goal-button" class="hidden">
+  <button id="add-goal-button">
     <img src="{{ url_for('static', filename='button.svg') }}" alt="Add Goal">
   </button>
 </p>
@@ -20,7 +20,7 @@
         <a href="{{ url_for('edit_goal', goal_id=goal['id']) }}">
           
           <!-- Goal Name -->
-          <p class="text-light">{{ goal.goal_name }}</p>
+          <p class="text-light">project: {{ goal.goal_name }}</p>
           <!-- (Completed) status -->
           <p>{% if goal.completed == 1 %}<em> (Completed)</em>{% endif %}</p>
           
@@ -32,7 +32,7 @@
             {% endif %}
             <br> -->
             <!-- <strong>Iteration:</strong> {{ goal.iteration }}<br> -->
-            <p>Next Step: {{ goal.next_steps }}</p>
+            <p>{{ goal.next_steps }}</p>
             
             <!-- <strong>Next run:</strong>{{ goal.next_run or 'N/A' }} -->
             <div class="progress-bar-container">
@@ -58,13 +58,6 @@
 {% endif %}
 
 <script>
-  document.querySelector('.motivational-quote').addEventListener('mouseover', function() {
-    document.getElementById('add-goal-button').classList.remove('hidden');
-  });
-
-  document.querySelector('.motivational-quote').addEventListener('mouseout', function() {
-    document.getElementById('add-goal-button').classList.add('hidden');
-  });
 
   document.getElementById('add-goal-button').addEventListener('click', function() {
     window.location.href = "{{ url_for('add_goal') }}";
