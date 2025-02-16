@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 import socket
 import random
 import re  # new import for regex
+from config import ITERATION_INTERVALS, VERSION, MOTIVATIONAL_QUOTES
 
 # Define Prague timezone
 TIMEZONE = pytz.timezone('Europe/Prague')
@@ -108,8 +109,7 @@ def send_confirmation_email(goal_id):
         context = {
             "goal_name": goal["goal_name"],
             "next_steps": goal["next_steps"],
-            "quote": "Keep pushing forward!"
-            # Removed explicit subject to use template's <title> instead
+            "quote": random.choice(MOTIVATIONAL_QUOTES)  # Updated to use dynamic quote
         }
         send_email("confirmation_email", os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com"), context)
         logger.info(f"Confirmation email sent for goal: '{goal['goal_name']}'")
@@ -126,8 +126,7 @@ def send_startup_email():
         context = {
             "welcome_message": "Welcome to Mindbaboon!",
             "info": "Your system has started successfully.",
-            "quote": "Keep pushing forward!"
-            # No subject key--it will be taken from the template's <title>
+            "quote": random.choice(MOTIVATIONAL_QUOTES)  # Updated to use dynamic quote
         }
         send_email("startup_email", os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com"), context)
 
@@ -149,7 +148,7 @@ def send_goal_reminder(goal_id):
                 "next_steps": goal["next_steps"],
                 "iteration_url_yes": f"http://{get_server_host()}:5000/iteration/{goal_id}?completed=yes",
                 "iteration_url_no": f"http://{get_server_host()}:5000/iteration/{goal_id}?completed=no",
-                "quote": "Keep pushing forward!"
+                "quote": random.choice(MOTIVATIONAL_QUOTES)  # Updated to use dynamic quote
             }
             send_email("normal_email", os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com"), context)
             now = datetime.now(TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')
