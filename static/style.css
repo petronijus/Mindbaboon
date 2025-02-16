@@ -13,6 +13,7 @@ body {
 
 .main-content {
   flex: 1;
+  margin-top: 40px;
 }
 
 footer {
@@ -31,7 +32,7 @@ h1, h2, p, em, a {
 strong {
   font-weight: 700;
 }
-h1 {
+h1, .goal-form-container h1 {
   font-size: 4rem;
 }
 h2 {
@@ -68,18 +69,17 @@ ul li {
   font-size: 5rem;
   font-weight: 400;
   color: #e6e6e6;
-  margin-bottom: 20px;
+  margin-top: 20px;
   text-align: left;
   position: relative;
   line-height: 1.1;
-  padding-bottom: 50px;
 }
 .text-light {
   color: #e6e6e6;
 }
 .text-light.small {
   text-align: right;
-  font-size: 0.6em;
+  font-size: 1rem;
   margin-top: 5px;
   font-style: italic;
   font-weight: normal;
@@ -138,7 +138,6 @@ ul li {
 .add-goal-page {
   margin: 0 auto;
   max-width: 800px;  /* Adjust to your preference */
-  padding: 40px 20px;
 }
 
 /* Main form container */
@@ -147,31 +146,25 @@ ul li {
   flex-direction: column;
 }
 
-/* BIG input that replaces the heading */
-.form-group-big {
-  margin-bottom: 30px;
-  position: relative; /* so we can position the hr or other elements if needed */
-}
 
 /* This is the large text input that looks like a heading */
-.goal-header-input {
+.input-big {
   font-family: "crete", serif;
   font-weight: 400;
-  font-size: 2.5rem;
-  color: #999; /* Light gray to mimic the design */
+  font-size: 4rem;
+  color: #000000; /* Light gray to mimic the design */
   border: none;
   background: transparent;
   width: 100%;
   outline: none;
   padding: 0;
-  margin: 0 0 10px 0; /* space below before the hr */
 }
 
 /* Thin horizontal line under heading */
-.header-divider {
+.divider {
   border: none;
-  border-bottom: 1px solid #555; /* a mid-gray line */
-  margin-bottom: 30px;
+  border-bottom: 2px solid #000000; /* a mid-gray line */
+  margin-bottom: 40px;
 }
 
 hr {
@@ -182,6 +175,7 @@ hr {
 /* Form groups for single-line inputs */
 .form-group {
   margin-bottom: 25px;
+  width: 600px;
   display: flex;
   flex-direction: column;
 }
@@ -199,20 +193,24 @@ hr {
 .form-group textarea {
   font-family: "crete", serif;
   font-weight: 400;
-  font-size: 1.1rem;
-  color: #333;
+  font-size: 2rem;
+  color: #000000;
   border: none;
-  border-bottom: 1px solid #555;
+  border-bottom: 2px solid #000000;
   background: transparent;
   outline: none;
   padding: 5px 0;
   width: 100%;
   box-sizing: border-box;
+  height: 55px;
+}
+#next_steps {
+  height: 100px;
 }
 
 /* Placeholders in a lighter color */
 ::placeholder {
-  color: #ccc;
+  color: #e6e6e6;
 }
 
 /* Inline group for radio selections: Time Span, Iteration, etc. */
@@ -223,28 +221,31 @@ hr {
 }
 
 /* Label for the group (“time span,” “iteration”) */
-.form-inline-group .form-label {
+.form-inline-group .form-label, .form-inline-group label  {
   font-family: "crete", serif;
-  font-size: 1rem;
-  color: #999;
-  margin-right: 20px;
+  font-size: 2rem;
+  color: #000000;
+  margin-right: 30px;
 }
 
 /* Each radio label */
 .form-inline-group label {
-  margin-right: 20px;
   font-family: "crete", serif;
-  font-size: 1rem;
-  color: #999;
-  display: flex;
-  align-items: center;
+  font-size: 2rem;
   cursor: pointer;
+  /* Unselected radio text: light gray */
+  color: #e6e6e6;
 }
 
+.form-inline-group label:has(input:checked) {
+  /* Selected radio text: black */
+  color: #000000;
+}
+
+/* Hide radio inputs */
 .form-inline-group label input[type="radio"] {
-  margin-right: 5px;
+  display: none;
 }
-
 
 .hidden {
     display: none;
@@ -257,11 +258,13 @@ hr {
 #add-goal-button {
     position: absolute;
     left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
     background: none;
     border: none;
     cursor: pointer;
-    opacity: 1;
-    visibility: visible;
+    opacity: 0;
+    visibility: hidden;
     transition: opacity 1s ease;
 }
 .motivational-quote:hover #add-goal-button {
