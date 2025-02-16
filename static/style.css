@@ -202,10 +202,10 @@ hr {
   padding: 5px 0;
   width: 100%;
   box-sizing: border-box;
-  height: 55px;
-}
-#next_steps {
-  height: 100px;
+  min-height: 55px;
+  height: auto;
+  overflow: hidden;
+  resize: none; /* Prevent manual resizing */
 }
 
 /* Placeholders in a lighter color */

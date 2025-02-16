@@ -11,12 +11,11 @@
     <form method="POST" action="{{ url_for('edit_goal', goal_id=goal['id']) }}">
       
       <!-- Large heading-style input -->
-      <div class="form-group-big">
         <input
           type="text"
           id="goal_name"
           name="goal_name"
-          class="goal-header-input"
+          class="input-big"
           placeholder="Tell me your goal."
           onfocus="this.placeholder=''"
           onblur="this.placeholder='Tell me your goal.'"
@@ -24,7 +23,6 @@
           required
         >
         <hr class="header-divider">
-      </div>
 
       <!-- Single-sentence description -->
       <div class="form-group">
