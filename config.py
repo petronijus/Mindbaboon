@@ -1,4 +1,4 @@
-VERSION = "0.9.5"
+VERSION = "0.9.6"
 ITERATION_INTERVALS = {
     "week": {"minutes": 2},
     "2 weeks": {"minutes": 15},
@@ -6,7 +6,7 @@ ITERATION_INTERVALS = {
 }
 MOTIVATIONAL_QUOTES = [
     "Push yourself, because no one else is going to do it for you.",
-    "Great things never come from comfort zones.",
+    "A creative man is motivated by the desire to achieve, not by the desire to beat others.",
     "Dream it. Believe it. Build it.",
     "Don't stop until you're proud.",
     "Your limitation—it's only your imagination.",

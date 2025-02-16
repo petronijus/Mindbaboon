@@ -74,6 +74,16 @@ ul li {
   line-height: 1.1;
   padding-bottom: 50px;
 }
+.text-light {
+  color: #e6e6e6;
+}
+.text-light.small {
+  text-align: right;
+  font-size: 0.6em;
+  margin-top: 5px;
+  font-style: italic;
+  font-weight: normal;
+}
 
 .motivational-quote:hover #add-goal-button {
   opacity: 1;
@@ -94,7 +104,37 @@ ul li {
 }
 .goals li p {
   font-weight: 700;
+  margin: 0px;
   }
+
+/* Delete form styling updated to avoid jump by preserving layout space */
+.goals li .delete-form {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  display: inline; /* keeps the allocated space */
+  /* Remove fixed height if any */
+  height: auto;
+}
+
+/* Style the delete button to look like text */
+.goals li .delete-form button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 0.8em;
+}
+
+/* Show delete form on hover */
+.goals li:hover .delete-form {
+  visibility: visible;
+  opacity: 1;
+}
 
 /* Overall page container */
 .add-goal-page {

@@ -18,34 +18,35 @@
     {% for goal in goals %}
       <li>
         <a href="{{ url_for('edit_goal', goal_id=goal['id']) }}">
-          <!-- Goal Name -->
-          <strong>{{ goal.goal_name }}</strong>
-          <!-- (Completed) status -->
-          {% if goal.completed == 1 %}<em> (Completed)</em>{% endif %}
           
-          <p>
-            <strong>Description:</strong> {{ goal.goal_description }}<br>
-            <strong>Time Span:</strong> {{ goal.time_span }}
+          <!-- Goal Name -->
+          <p class="text-light">{{ goal.goal_name }}</p>
+          <!-- (Completed) status -->
+          <p>{% if goal.completed == 1 %}<em> (Completed)</em>{% endif %}</p>
+          
+          
+            <!-- <strong>Description:</strong> {{ goal.goal_description }}<br> -->
+            <!-- <strong>Time Span:</strong> {{ goal.time_span }}
             {% if goal.time_span == "specific_date" %}
               (Ends on: {{ goal.end_date }})
             {% endif %}
-            <br>
-            <strong>Iteration:</strong> {{ goal.iteration }}<br>
-            <strong>Next Step:</strong> {{ goal.next_steps }}<br>
-            <strong>Reward:</strong> {{ goal.reward }}<br>
-            <strong>Next run:</strong>{{ goal.next_run or 'N/A' }}
-
-          </p>
+            <br> -->
+            <!-- <strong>Iteration:</strong> {{ goal.iteration }}<br> -->
+            <p>Next Step: {{ goal.next_steps }}</p>
+            
+            <!-- <strong>Next run:</strong>{{ goal.next_run or 'N/A' }} -->
+            <div class="progress-bar-container">
+              <div class="progress-bar{% if goal.is_paused == 1 %} paused{% endif %}" style="width: {{ goal.progress }}%;"></div>
+              <span>{{ goal.progress | round }}% complete</span>
+            </div>
+            <p class="text-light small">Reward: {{ goal.reward }}</p>
         </a>
         <!-- Existing progress bar in index.html -->
-        <div class="progress-bar-container">
-          <div class="progress-bar{% if goal.is_paused == 1 %} paused{% endif %}" style="width: {{ goal.progress }}%;"></div>
-          <span>{{ goal.progress | round }}% complete</span>
-        </div>
+        
         
 
         <!-- Delete form -->
-        <form method="POST" action="/delete_goal">
+        <form method="POST" action="/delete_goal" class="delete-form">
           <input type="hidden" name="goal_id" value="{{ goal['id'] }}" style="display:inline">
           <button type="submit">Delete</button>
         </form>
