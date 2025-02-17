@@ -42,7 +42,6 @@
       </h2>
 
       <div class="form-group">
-        <label id="lblWasDone">Write shortly what you did:</label><br>
         <textarea 
           type="text" 
           id="txtWasDone" 
@@ -50,6 +49,9 @@
           maxlength="200" 
           class="input-medium"
           rows="1"
+          placeholder="Write shortly what you did"
+          onfocus="this.placeholder=''"
+          onblur="this.placeholder='Write shortly what you did'"
           required
         ></textarea>
         <p class="text-light small">200 chars</p>
