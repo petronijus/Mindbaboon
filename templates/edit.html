@@ -22,20 +22,21 @@
           value="{{ goal['goal_name'] }}"
           required
         >
-        <hr class="header-divider">
-
+        <hr class="divider">
+      
       <!-- Single-sentence description -->
       <div class="form-group">
-        <label for="goal_description" class="label-floating">Explain in one sentence.</label>
-        <input 
-          type="text"
-          id="goal_description"
-          name="goal_description"
-          maxlength="200"
-          placeholder="200 chars"
-          value="{{ goal['goal_description'] }}"
+        <textarea 
+          type="text" 
+          id="goal_description" 
+          name="goal_description" 
+          maxlength="200" 
+          class="input-medium"
+          rows="1"
           required
-        >
+        >{{ goal['goal_description'] }}</textarea>
+        <p class="text-light small">200 chars</p>
+        
       </div>
 
       <!-- Time Span Options -->
@@ -120,29 +121,29 @@
 
       <!-- Next Step -->
       <div class="form-group">
-        <label for="next_steps" class="label-floating">
-          Next steps: What needs to be done till next iteration?
-        </label>
-        <textarea
-          id="next_steps"
-          name="next_steps"
-          maxlength="64"
-          placeholder="64 chars"
+        <textarea 
+          id="next_steps" 
+          name="next_steps" 
+          maxlength="64" 
+          class="input-medium"
+          rows="1"
         >{{ goal['next_steps'] }}</textarea>
+        <p class="text-light small">64 chars</p>
       </div>
 
       <!-- Reward -->
       <div class="form-group">
-        <label for="reward" class="label-floating">How do I reward myself.</label>
-        <input
-          type="text"
-          id="reward"
-          name="reward"
-          maxlength="64"
-          placeholder="64 chars"
-          value="{{ goal['reward'] }}"
-        >
+        <textarea  
+          type="text" 
+          id="reward" 
+          name="reward" 
+          maxlength="64" 
+          class="input-medium"
+          rows="1"
+        >{{ goal['reward'] }}</textarea>
+        <p class="text-light small">64 chars</p>
       </div>
+
 
       <!-- Completed Checkbox (optional if you want to toggle completion here) -->
       <div class="form-group">
@@ -157,22 +158,22 @@
       </div>
 
       <!-- Submit Button -->
-      <button type="submit" class="add-goal-button">Save Goal</button>
+      <button type="submit" class="add-goal-button">save</button>
     </form>
   </div>
-</div>
+
 
     <!-- Iteration History Section -->
     <div class="form-group">
-      <h2>Iteration History</h2>
+      <h2>History</h2>
       <table id="iteration-history">
         <thead>
           <tr>
-            <th>Status</th>
-            <th>Was Done</th>
-            <th>Next Steps</th>
-            <th>Reward</th>
-            <th>Updated At</th>
+            <th>date</th>
+            <th>iteration</th>
+            <th>what was done</th>
+            <th>next steps</th>
+            <th>reward</th>
           </tr>
         </thead>
         <tbody>
@@ -185,6 +186,15 @@
       document.addEventListener('DOMContentLoaded', function () {
         const goalId = "{{ goal.id }}"; // Add quotes to make it a valid JavaScript string
     
+        // Helper function to format timestamp as dd:mm:yy
+        function formatTimestamp(ts) {
+          const date = new Date(ts);
+          const dd = ('0' + date.getDate()).slice(-2);
+          const mm = ('0' + (date.getMonth() + 1)).slice(-2);
+          const yy = date.getFullYear().toString().slice(-2);
+          return dd + '/' + mm + '/' + yy;
+        }
+
         function loadGoalHistory() {
           fetch(`/goal/${goalId}/history`)
             .then(response => response.json())
@@ -194,11 +204,11 @@
               data.forEach(row => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
+                  <td>${ row.timestamp ? formatTimestamp(row.timestamp) : 'N/A' }</td>
                   <td>${row.completed || 'N/A'}</td>
                   <td>${row.was_done || 'N/A'}</td>
                   <td>${row.next_steps || 'N/A'}</td>
                   <td>${row.reward || 'N/A'}</td>
-                  <td>${row.timestamp || 'N/A'}</td>
                 `;
                 tbody.appendChild(tr);
               });
@@ -210,6 +220,7 @@
         loadGoalHistory();
       });
     </script>
+  </div>
     
 {% endblock %}
-    
+

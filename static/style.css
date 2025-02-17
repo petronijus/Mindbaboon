@@ -1,3 +1,16 @@
+/* Color constants */
+:root {
+  --primary-text: #000;
+  --secondary-text: #333;
+  --link-color: #555;
+  --link-hover-color: #ff69b4;
+  --body-bg: transparent;
+  --footer-text: #fff;
+  --light-gray: #e6e6e6;
+  --mid-gray: #b4b4b4;
+  --accent-color: #ff69b4;
+}
+
 /* Ensure the footer stays at the bottom of the page */
 html, body {
   height: 100%;
@@ -17,17 +30,17 @@ body {
 }
 
 footer {
-  color: #fff;
+  color: var(--footer-text);
   text-align: left;
   padding: 10px 0;
 }
 
 
 /* General text styles for index.html */
-h1, h2, p, em, a {
+h1, h2, p, em, a, label {
   font-family: "crete", serif;
   font-weight: 400;
-  color: #000; /* Adjust color as needed */
+  color: var(--primary-text); /* Adjust color as needed */
 }
 strong {
   font-weight: 700;
@@ -41,11 +54,11 @@ h2 {
 /* Specific to links */
 a {
   text-decoration: none;
-  color: #555; /* Adjust for link styling */
+  color: var(--link-color); /* Adjust for link styling */
 }
 
 a:hover {
-  color: #999; /* Hover effect */
+  color: var(--link-hover-color); /* Hover effect */
 }
 
 /* Style for unordered lists */
@@ -59,8 +72,30 @@ ul {
 ul li {
   font-family: "crete", serif; /* Use the same font as other text */
   font-size: 1.1rem; /* Adjust the font size */
-  color: #333; /* Set the text color */
+  color: var(--secondary-text); /* Set the text color */
   margin-bottom: 10px; /* Add some space between list items */
+}
+
+/* Style for table */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+  font-family: "crete", serif;
+  font-weight: 400;
+  font-size: 1rem;
+  text-align: left;
+}
+
+th, td {
+  padding: 12px 12px 12px 0;
+  vertical-align: bottom;
+  border-bottom: 2px solid var(--light-gray);
+}
+
+th {
+  font-weight: bold;
+  border-bottom: 2px solid #000;
 }
 
 
@@ -68,14 +103,14 @@ ul li {
   font-family: "crete", serif;
   font-size: 5rem;
   font-weight: 400;
-  color: #e6e6e6;
+  color: var(--light-gray);
   margin-top: 20px;
   text-align: left;
   position: relative;
   line-height: 1.1;
 }
 .text-light {
-  color: #e6e6e6;
+  color: var(--light-gray);
 }
 .text-light.small {
   text-align: right;
@@ -116,16 +151,20 @@ ul li {
 }
 
 /* Style the delete button to look like text */
-.goals li .delete-form button {
+.goals li .delete-form button, button {
   background: none;
   border: none;
   padding: 0;
   margin: 0;
-  font: inherit;
-  color: inherit;
+  font-family: "crete", serif;
+  font-weight: 700;
+  color: var(--primary-text);
   cursor: pointer;
   text-decoration: underline;
-  font-size: 0.8em;
+  font-size: 2rem;
+}
+.goals li .delete-form button:hover, button:hover {
+  color: var(--link-hover-color);
 }
 
 /* Show delete form on hover */
@@ -152,9 +191,9 @@ ul li {
   font-family: "crete", serif;
   font-weight: 400;
   font-size: 4rem;
-  color: #000000; /* Light gray to mimic the design */
+  color: var(--primary-text); /* Light gray to mimic the design */
   border: none;
-  background: transparent;
+  background: var(--body-bg);
   width: 100%;
   outline: none;
   padding: 0;
@@ -163,13 +202,13 @@ ul li {
 /* Thin horizontal line under heading */
 .divider {
   border: none;
-  border-bottom: 2px solid #000000; /* a mid-gray line */
+  border-bottom: 2px solid var(--primary-text); /* a mid-gray line */
   margin-bottom: 40px;
 }
 
 hr {
   border: none;
-  border-top: 2px solid black;
+  border-top: 2px solid var(--primary-text);
 }
 
 /* Form groups for single-line inputs */
@@ -194,10 +233,10 @@ hr {
   font-family: "crete", serif;
   font-weight: 400;
   font-size: 2rem;
-  color: #000000;
+  color: var(--primary-text);
   border: none;
-  border-bottom: 2px solid #000000;
-  background: transparent;
+  border-bottom: 2px solid var(--primary-text);
+  background: var(--body-bg);
   outline: none;
   padding: 5px 0;
   width: 100%;
@@ -210,7 +249,7 @@ hr {
 
 /* Placeholders in a lighter color */
 ::placeholder {
-  color: #e6e6e6;
+  color: var(--light-gray);
 }
 
 /* Inline group for radio selections: Time Span, Iteration, etc. */
@@ -224,7 +263,7 @@ hr {
 .form-inline-group .form-label, .form-inline-group label  {
   font-family: "crete", serif;
   font-size: 2rem;
-  color: #000000;
+  color: var(--primary-text);
   margin-right: 30px;
 }
 
@@ -234,12 +273,12 @@ hr {
   font-size: 2rem;
   cursor: pointer;
   /* Unselected radio text: light gray */
-  color: #e6e6e6;
+  color: var(--light-gray);
 }
 
 .form-inline-group label:has(input:checked) {
   /* Selected radio text: black */
-  color: #000000;
+  color: var(--primary-text);
 }
 
 /* Hide radio inputs */
@@ -281,7 +320,7 @@ hr {
 
 .progress-bar-container {
   width: 100%;
-  background-color: #b4b4b4;
+  background-color: var(--mid-gray);
   border-radius: 5px;
   overflow: hidden;
   margin-top: 10px;
@@ -289,7 +328,7 @@ hr {
 }
 
 .progress-bar {
-  background-color: #000000;
+  background-color: var(--primary-text);
   height: 4px;
   transition: width 0.5s ease;
 }
