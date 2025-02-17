@@ -8,36 +8,113 @@
       <h2>{{ goal.next_steps }}</h2>
     </div>
 
-    <form method="POST" class="form-group-big">
-      <label>Step completed?</label><br>
-      <input type="radio" name="completed" value="yes" {% if request.args.get('completed') == 'yes' %}checked{% endif %} onclick="updateMessage('yes')"> Yes<br>
-      <input type="radio" name="completed" value="no" {% if request.args.get('completed') == 'no' %}checked{% endif %} onclick="updateMessage('no')"> No<br>
+    <form method="POST" class="form-group">
 
-      <h1 id="dynamicMessage">
+      <!-- Time Span Options -->
+      <div class="form-inline-group">
+        <span class="form-label">Step completed?</span>
+        <label>
+          <input 
+            type="radio" 
+            name="completed" 
+            value="yes" 
+            {% if request.args.get('completed') == 'yes' %}checked{% endif %}
+            onclick="updateMessage('yes')"
+          > yes
+        </label>
+        <label>
+          <input 
+            type="radio" 
+            name="completed" 
+            value="no"
+            {% if request.args.get('completed') == 'no' %}checked{% endif %}
+            onclick="updateMessage('no')"
+          > no
+        </label>
+      </div>
+
+      <h2 id="dynamicMessage">
         {% if request.args.get('completed') == 'yes' %}
           Banana!
         {% elif request.args.get('completed') == 'no' %}
-          Baboon is angry
+          Baboon is pissed
         {% endif %}
-      </h1>
+      </h2>
 
-      <label id="lblWasDone">Write shortly what you did:</label><br>
-      <textarea id="txtWasDone" name="was_done"></textarea><br>
+      <div class="form-group">
+        <label id="lblWasDone">Write shortly what you did:</label><br>
+        <textarea 
+          type="text" 
+          id="txtWasDone" 
+          name="was_done" 
+          maxlength="200" 
+          class="input-medium"
+          rows="1"
+          required
+        ></textarea>
+        <p class="text-light small">200 chars</p>
+        
+      </div>
 
-      <label id="lblNextStep">Next Step:</label><br>
-      <textarea id="txtNextStep" name="next_steps">{{ goal.next_steps }}</textarea><br>
+      <div class="form-group">
+        <label id="lblNextStep">Next Step:</label><br>
+        <textarea 
+          type="text" 
+          id="txtNextStep" 
+          name="next_steps" 
+          maxlength="200" 
+          class="input-medium"
+          rows="1"
+          required
+        >{{ goal.next_steps }}</textarea>
+        <p class="text-light small">200 chars</p>
+        
+      </div>
 
-      <label id="lblReward">Reward:</label><br>
-      <input type="text" id="txtReward" name="reward" value="{{ goal.reward }}"><br>
+      <div class="form-group">
+        <label id="lblReward">Reward:</label><br>
+        <textarea 
+          type="text" 
+          id="txtReward" 
+          name="reward" 
+          maxlength="64" 
+          class="input-medium"
+          rows="1"
+          required
+        >{{ goal.reward }}</textarea>
+        <p class="text-light small">64 chars</p>
+      </div>
 
-      <label id="lblIteration">Iteration Frequency:</label><br>
-      <select id="selIteration" name="iteration">
-        <option value="week" {% if goal.iteration == 'week' %}selected{% endif %}>Week</option>
-        <option value="2 weeks" {% if goal.iteration == '2 weeks' %}selected{% endif %}>2 Weeks</option>
-        <option value="month" {% if goal.iteration == 'month' %}selected{% endif %}>Month</option>
-      </select><br>
+      <!-- Iteration Options -->
+      <div class="form-inline-group">
+        <span class="form-label">iteration</span>
+        <label>
+          <input
+            type="radio"
+            name="iteration"
+            value="week"
+            {% if goal['iteration'] == 'week' %}checked{% endif %}
+          > week
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="iteration"
+            value="2 weeks"
+            {% if goal['iteration'] == '2 weeks' %}checked{% endif %}
+          > 2 weeks
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="iteration"
+            value="month"
+            {% if goal['iteration'] == 'month' %}checked{% endif %}
+          > month
+        </label>
+      </div>
 
-      <button type="submit" id="btnSave" class="add-goal-button">Save</button>
+      <button type="submit" id="btnSave" class="add-goal-button">save</button>
     </form>
   </div>
 </div>

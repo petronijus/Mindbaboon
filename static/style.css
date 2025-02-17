@@ -165,6 +165,7 @@ th {
   cursor: pointer;
   text-decoration: underline;
   font-size: 2rem;
+  text-align: left;
 }
 .goals li .delete-form button:hover, button:hover {
   color: var(--link-hover-color);
