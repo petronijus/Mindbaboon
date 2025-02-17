@@ -69,7 +69,7 @@
       </div>
 
       <!-- Specific Date Input -->
-      <div class="form-group" id="specific-date-container" class="{% if goal['time_span'] == 'specific_date' %}visible{% else %}hidden{% endif %}">
+      <div id="specific-date-container" class="form-group {% if goal['time_span'] == 'specific_date' %}visible{% else %}hidden{% endif %}">
         <label for="specific_date" class="label-floating">Choose a specific date:</label>
         <input
           type="date"

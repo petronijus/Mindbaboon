@@ -37,7 +37,7 @@ footer {
 
 
 /* General text styles for index.html */
-h1, h2, p, em, a, label {
+h1, h2, h3, p, em, a, label {
   font-family: "crete", serif;
   font-weight: 400;
   color: var(--primary-text); /* Adjust color as needed */
@@ -50,6 +50,9 @@ h1, .goal-form-container h1 {
 }
 h2 {
   font-size: 3rem;
+}
+h3 {
+  font-size: 2rem;
 }
 /* Specific to links */
 a {
@@ -183,6 +186,11 @@ th {
 .goal-form-container {
   display: flex;
   flex-direction: column;
+}
+
+.goal-form-intro, .goal-form-intro h2 {
+  margin-bottom: 10px;
+  color: var(--light-gray);
 }
 
 
