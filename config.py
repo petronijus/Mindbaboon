@@ -1,8 +1,8 @@
 VERSION = "0.9.8"
 ITERATION_INTERVALS = {
-    "week": {"minutes": 2},
-    "2 weeks": {"minutes": 15},
-    "month": {"minutes": 30}
+    "week": {"weeks": 1},
+    "2 weeks": {"weeks": 2},
+    "month": {"days": 30}
 }
 MOTIVATIONAL_QUOTES = [
     "Push yourself, because no one else is going to do it for you.",
