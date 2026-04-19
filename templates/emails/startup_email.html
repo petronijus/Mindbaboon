@@ -54,6 +54,7 @@
       border-top: 1px solid #eee;
       padding-top: 8px;
     }
+    .footer a { color: #666; text-decoration: none; font-style: italic; }
   </style>
 </head>
 <body>
@@ -61,8 +62,8 @@
     <p class="quote">{{ quote }}</p>
     <h1>It was about time!</h1>
     <p>Rock the trees!</p>
-    <p class="signature"><i>Mindbaboon!</i></p>
-    <p class="footer">Mindbaboon v{{ version }}</p>
+    <p class="signature"><a href="{{ home_url }}"><i>Mindbaboon!</i></a></p>
+    <p class="footer"><a href="{{ home_url }}">Mindbaboon v{{ version }}</a></p>
   </div>
 </body>
 </html>

@@ -1,9 +1,10 @@
-VERSION = "0.9.9"
+VERSION = "0.9.10"
 ITERATION_INTERVALS = {
     "week": {"weeks": 1},
     "2 weeks": {"weeks": 2},
-    "month": {"days": 30}
+    "month": {"weeks": 4}
 }
+DEFAULT_ITERATION_SLOT = {"weekday": 5, "hour": 11, "minute": 0}
 MOTIVATIONAL_QUOTES = [
     "Push yourself, because no one else is going to do it for you.",
     "A creative man is motivated by the desire to achieve, not by the desire to beat others.",

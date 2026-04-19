@@ -145,6 +145,43 @@ def resume_goal(goal_id: int) -> Any:
 
 
 @mcp.tool()
+def get_settings() -> Any:
+    """Get current settings, including the global iteration slot (weekday + time
+    when all reminders fire) and the default email address."""
+    with _client() as c:
+        return _unwrap(c.get("/api/settings"))
+
+
+@mcp.tool()
+def update_settings(
+    weekday: int | None = None,
+    hour: int | None = None,
+    minute: int | None = None,
+    default_email: str | None = None,
+) -> Any:
+    """Update the global iteration slot and/or default email. Changing the slot
+    reschedules all active goals to align with the new window.
+
+    weekday: 0=Monday .. 6=Sunday. hour: 0..23. minute: 0..59.
+    Pass only fields you want to change.
+    """
+    body: dict[str, Any] = {}
+    slot: dict[str, Any] = {}
+    if weekday is not None:
+        slot["weekday"] = weekday
+    if hour is not None:
+        slot["hour"] = hour
+    if minute is not None:
+        slot["minute"] = minute
+    if slot:
+        body["iteration_slot"] = slot
+    if default_email is not None:
+        body["default_email"] = default_email
+    with _client() as c:
+        return _unwrap(c.patch("/api/settings", json=body))
+
+
+@mcp.tool()
 def goal_history(goal_id: int) -> Any:
     """Get both goal_history and iteration_history for a goal."""
     with _client() as c:

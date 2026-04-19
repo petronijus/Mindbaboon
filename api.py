@@ -11,14 +11,23 @@ import logging
 
 from flask import Blueprint, request, jsonify
 
-from database import get_db_connection
+from database import (
+    get_db_connection,
+    get_iteration_slot,
+    set_iteration_slot,
+    get_setting,
+    set_setting,
+)
 from config import ITERATION_INTERVALS, VERSION
 from scheduler import (
     scheduler,
     schedule_reminder,
     remove_reminder,
     get_next_run_for_goal,
+    reschedule_all_active,
 )
+
+WEEKDAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 logger = logging.getLogger(__name__)
 
@@ -309,6 +318,58 @@ def resume_goal(goal_id):
     if iteration:
         schedule_reminder(goal_id, iteration)
     return jsonify({"ok": True, "goal_id": goal_id, "paused": False})
+
+
+@api_bp.route("/settings", methods=["GET"])
+@require_api_key
+def get_settings():
+    slot = get_iteration_slot()
+    return jsonify(
+        {
+            "iteration_slot": {
+                **slot,
+                "weekday_name": WEEKDAY_NAMES[slot["weekday"]],
+            },
+            "default_email": get_setting("default_email"),
+        }
+    )
+
+
+@api_bp.route("/settings", methods=["PATCH"])
+@require_api_key
+def update_settings():
+    data = request.get_json(silent=True) or {}
+    changed_slot = False
+    slot_update = data.get("iteration_slot") or {}
+    if slot_update:
+        wd = slot_update.get("weekday")
+        hr = slot_update.get("hour")
+        mn = slot_update.get("minute")
+        if wd is not None and not (0 <= int(wd) <= 6):
+            return jsonify({"error": "weekday must be 0..6 (0=Monday)"}), 400
+        if hr is not None and not (0 <= int(hr) <= 23):
+            return jsonify({"error": "hour must be 0..23"}), 400
+        if mn is not None and not (0 <= int(mn) <= 59):
+            return jsonify({"error": "minute must be 0..59"}), 400
+        set_iteration_slot(weekday=wd, hour=hr, minute=mn)
+        changed_slot = True
+
+    if "default_email" in data and data["default_email"]:
+        set_setting("default_email", data["default_email"])
+        import os as _os
+        _os.environ["DEFAULT_TO_ADDRESS"] = data["default_email"]
+
+    rescheduled = []
+    if changed_slot:
+        rescheduled = reschedule_all_active()
+
+    slot = get_iteration_slot()
+    return jsonify(
+        {
+            "iteration_slot": {**slot, "weekday_name": WEEKDAY_NAMES[slot["weekday"]]},
+            "rescheduled_goals": [{"goal_id": gid, "next_run": nxt} for gid, nxt in rescheduled],
+        }
+    )
 
 
 @api_bp.route("/goals/<int:goal_id>/history", methods=["GET"])

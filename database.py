@@ -30,6 +30,24 @@ def set_setting(key, value):
         INSERT INTO settings (key, value)
         VALUES (?, ?)
         ON CONFLICT(key) DO UPDATE SET value = excluded.value
-    """, (key, value))
+    """, (key, str(value)))
     conn.commit()
     conn.close()
+
+
+def get_iteration_slot():
+    """Return dict {weekday:0-6, hour:0-23, minute:0-59} for global iteration window."""
+    from config import DEFAULT_ITERATION_SLOT
+    weekday = int(get_setting("iteration_weekday") or DEFAULT_ITERATION_SLOT["weekday"])
+    hour = int(get_setting("iteration_hour") or DEFAULT_ITERATION_SLOT["hour"])
+    minute = int(get_setting("iteration_minute") or DEFAULT_ITERATION_SLOT["minute"])
+    return {"weekday": weekday, "hour": hour, "minute": minute}
+
+
+def set_iteration_slot(weekday=None, hour=None, minute=None):
+    if weekday is not None:
+        set_setting("iteration_weekday", int(weekday))
+    if hour is not None:
+        set_setting("iteration_hour", int(hour))
+    if minute is not None:
+        set_setting("iteration_minute", int(minute))

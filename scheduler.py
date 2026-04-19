@@ -64,6 +64,43 @@ def get_server_host():
             host = "localhost"
     return host
 
+def _fmt_day(dt):
+    """Pretty short date like 'Saturday 3. May'. No year, no time."""
+    if dt is None:
+        return None
+    return f"{dt.strftime('%A')} {dt.day}. {dt.strftime('%B')}"
+
+
+def _base_url():
+    return f"http://{get_server_host()}:5000"
+
+
+def _other_active_goals(exclude_id):
+    """List other active (not paused, not completed) goals with their next_run ISO and pretty date."""
+    conn = get_db_connection()
+    try:
+        rows = conn.execute(
+            "SELECT id, goal_name, next_steps, iteration FROM goals "
+            "WHERE id != ? AND completed = 0 ORDER BY id",
+            (exclude_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+    out = []
+    for r in rows:
+        job = scheduler.get_job(f"goal_{r['id']}")
+        nxt = job.next_run_time if job else None
+        out.append({
+            "id": r["id"],
+            "goal_name": r["goal_name"],
+            "next_steps": r["next_steps"],
+            "iteration": r["iteration"],
+            "next_day": _fmt_day(nxt),
+            "edit_url": f"{_base_url()}/edit/{r['id']}",
+        })
+    return out
+
+
 def render_email(email_type, context):
     template_name = f"emails/{email_type}.html"
     # Use subject from context if provided, else set default value.
@@ -99,12 +136,18 @@ def send_confirmation_email(goal_id):
         if not goal:
             logger.warning(f"No goal found with ID {goal_id}.")
             return
+        job = scheduler.get_job(f"goal_{goal_id}")
+        first_run = job.next_run_time if job else None
         context = {
+            "goal_id": goal_id,
             "goal_name": goal["goal_name"],
             "next_steps": goal["next_steps"],
             "quote": random.choice(MOTIVATIONAL_QUOTES),
             "version": VERSION,
-            "next_run": get_next_run_for_goal(goal_id),
+            "next_day": _fmt_day(first_run),
+            "home_url": _base_url(),
+            "edit_url": f"{_base_url()}/edit/{goal_id}",
+            "other_goals": _other_active_goals(goal_id),
         }
         send_email("confirmation_email", os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com"), context)
         logger.info(f"Confirmation email sent for goal: '{goal['goal_name']}'")
@@ -123,6 +166,7 @@ def send_startup_email():
             "info": "Your system has started successfully.",
             "quote": random.choice(MOTIVATIONAL_QUOTES),
             "version": VERSION,
+            "home_url": _base_url(),
         }
         send_email("startup_email", os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com"), context)
 
@@ -142,14 +186,18 @@ def send_goal_reminder(goal_id):
             interval_args = ITERATION_INTERVALS.get(goal["iteration"]) or {}
             next_check = datetime.now(TIMEZONE) + timedelta(**interval_args) if interval_args else None
             context = {
+                "goal_id": goal_id,
                 "goal_name": goal["goal_name"],
                 "next_steps": goal["next_steps"],
-                "iteration_url_yes": f"http://{get_server_host()}:5000/iteration/{goal_id}?completed=yes",
-                "iteration_url_no": f"http://{get_server_host()}:5000/iteration/{goal_id}?completed=no",
+                "iteration_url_yes": f"{_base_url()}/iteration/{goal_id}?completed=yes",
+                "iteration_url_no": f"{_base_url()}/iteration/{goal_id}?completed=no",
+                "edit_url": f"{_base_url()}/edit/{goal_id}",
+                "home_url": _base_url(),
                 "quote": random.choice(MOTIVATIONAL_QUOTES),
                 "version": VERSION,
                 "iteration": goal["iteration"],
-                "next_check": next_check.strftime("%A %d. %B %Y") if next_check else None,
+                "next_day": _fmt_day(next_check),
+                "other_goals": _other_active_goals(goal_id),
             }
             send_email("normal_email", os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com"), context)
             now = datetime.now(TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')
@@ -172,7 +220,20 @@ def get_next_run_for_goal(goal_id):
         return datetime.fromtimestamp(result["next_run_time"], TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')
     return None
 
-def schedule_reminder(goal_id, iteration):
+def next_iteration_slot(after=None):
+    """Next occurrence of the globally-configured iteration window (weekday+time) strictly after `after`."""
+    from database import get_iteration_slot
+    slot = get_iteration_slot()
+    after = after or datetime.now(TIMEZONE)
+    candidate = after.replace(hour=slot["hour"], minute=slot["minute"], second=0, microsecond=0)
+    days_ahead = (slot["weekday"] - after.weekday()) % 7
+    candidate += timedelta(days=days_ahead)
+    if candidate <= after:
+        candidate += timedelta(days=7)
+    return candidate
+
+
+def schedule_reminder(goal_id, iteration, send_confirmation=True):
     logger.info(f"Scheduling reminder for goal_id: {goal_id}")
     interval_args = ITERATION_INTERVALS.get(iteration)
     if not interval_args:
@@ -186,7 +247,7 @@ def schedule_reminder(goal_id, iteration):
 
     try:
         now = datetime.now(TIMEZONE)
-        next_run_time = now + timedelta(**interval_args)
+        next_run_time = next_iteration_slot(after=now)
         scheduler.add_job(
             func=send_goal_reminder,
             trigger="interval",
@@ -196,7 +257,7 @@ def schedule_reminder(goal_id, iteration):
             **interval_args,
             next_run_time=next_run_time
         )
-        logger.info(f"Job {job_id} scheduled successfully.")
+        logger.info(f"Job {job_id} scheduled at {next_run_time.isoformat()}")
         conn = get_db_connection()
         conn.execute("INSERT INTO iteration_history (iteration_id, status, next_run) VALUES (?, ?, ?)",
                      (goal_id, "Scheduled", next_run_time.strftime('%Y-%m-%d %H:%M:%S')))
@@ -204,9 +265,30 @@ def schedule_reminder(goal_id, iteration):
                      (now.strftime('%Y-%m-%d %H:%M:%S'), goal_id))
         conn.commit()
         conn.close()
-        send_confirmation_email(goal_id)
+        if send_confirmation:
+            send_confirmation_email(goal_id)
     except Exception as e:
         logger.error(f"Failed to schedule job {job_id}: {e}")
+
+
+def reschedule_all_active():
+    """Remove and re-add jobs for every active goal using the current slot + intervals.
+    Returns a list of (goal_id, next_run_time ISO) tuples."""
+    conn = get_db_connection()
+    try:
+        rows = conn.execute(
+            "SELECT id, iteration FROM goals WHERE completed = 0 AND iteration != ''"
+        ).fetchall()
+    finally:
+        conn.close()
+    results = []
+    for row in rows:
+        gid, it = row["id"], row["iteration"]
+        remove_reminder(gid)
+        schedule_reminder(gid, it, send_confirmation=False)
+        job = scheduler.get_job(f"goal_{gid}")
+        results.append((gid, job.next_run_time.isoformat() if job else None))
+    return results
 
 def remove_reminder(goal_id):
     from apscheduler.jobstores.base import JobLookupError

@@ -65,25 +65,56 @@
       border-top: 1px solid #eee;
       padding-top: 8px;
     }
+    .footer a { color: #666; text-decoration: none; font-style: italic; }
+    h2 a, .other-goals a.title { color: inherit; text-decoration: none; border-bottom: 1px dashed #ddd; }
+    .other-goals {
+      margin-top: 32px;
+      padding-top: 16px;
+      border-top: 1px solid #eee;
+    }
+    .other-goals h3 {
+      font-size: 1.1rem;
+      color: #666;
+      margin-bottom: 12px;
+    }
+    .other-goals ul { list-style: none; padding: 0; margin: 0; }
+    .other-goals li { margin-bottom: 14px; }
+    .other-goals .title { font-weight: bold; color: #333; font-size: 1.15rem; }
+    .other-goals .step { color: #666; font-size: 1rem; }
+    .other-goals .when { color: #aaa; font-size: 0.9rem; }
   </style>
 </head>
 <body>
   <div class="email-container">
     <p class="quote">{{ quote }}</p>
     <p><strong>Did you rocked</strong></p>
-    <h2>{{ goal_name }}</h2>
+    <h2><a href="{{ edit_url }}">{{ goal_name }}</a></h2>
     <p><strong>Have you completed</strong></p>
     <h1>{{ next_steps }}</h1>
     <h2>
-      <a class="link_yes" href="{{ iteration_url_yes }}">YES!</a> | 
+      <a class="link_yes" href="{{ iteration_url_yes }}">YES!</a> |
       <a class="link_no" href="{{ iteration_url_no }}">Oh nooooo</a>
     </h2>
     <p>Me watching!</p>
-    <p class="signature"><i>Mindbaboon!</i></p>
-    {% if next_check %}
-    <p class="meta">Next check-in ({{ iteration }}): <strong>{{ next_check }}</strong></p>
+    <p class="signature"><a href="{{ home_url }}"><i>Mindbaboon!</i></a></p>
+    {% if next_day %}
+    <p class="meta">Next check-in ({{ iteration }}): <strong>{{ next_day }}</strong></p>
     {% endif %}
-    <p class="footer">Mindbaboon v{{ version }}</p>
+    {% if other_goals %}
+    <div class="other-goals">
+      <h3>Other bananas on your plate</h3>
+      <ul>
+        {% for og in other_goals %}
+        <li>
+          <a class="title" href="{{ og.edit_url }}">{{ og.goal_name }}</a><br>
+          <span class="step">→ {{ og.next_steps }}</span><br>
+          {% if og.next_day %}<span class="when">{{ og.next_day }} ({{ og.iteration }})</span>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+    <p class="footer"><a href="{{ home_url }}">Mindbaboon v{{ version }}</a></p>
   </div>
 </body>
 </html>
