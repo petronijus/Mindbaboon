@@ -20,14 +20,7 @@ from config import ITERATION_INTERVALS, VERSION, MOTIVATIONAL_QUOTES
 # Define Prague timezone
 TIMEZONE = pytz.timezone('Europe/Prague')
 
-# Set up logger
 logger = logging.getLogger(__name__)
-if not logger.hasHandlers():
-    logger.setLevel(logging.DEBUG)
-    handler = logging.StreamHandler()
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
 
 # SchedulerManager using double-check locking
 class SchedulerManager:
@@ -44,7 +37,7 @@ class SchedulerManager:
                     jobstore_path = f'sqlite:///{db_path}'
                     jobstores = {'default': SQLAlchemyJobStore(url=jobstore_path)}
                     executors = {'default': ThreadPoolExecutor(20)}
-                    job_defaults = {'coalesce': True, 'max_instances': 1, 'misfire_grace_time': 3600}
+                    job_defaults = {'coalesce': True, 'max_instances': 1, 'misfire_grace_time': 60}
                     cls._instance = BackgroundScheduler(
                         jobstores=jobstores,
                         executors=executors,
@@ -109,7 +102,9 @@ def send_confirmation_email(goal_id):
         context = {
             "goal_name": goal["goal_name"],
             "next_steps": goal["next_steps"],
-            "quote": random.choice(MOTIVATIONAL_QUOTES)  # Updated to use dynamic quote
+            "quote": random.choice(MOTIVATIONAL_QUOTES),
+            "version": VERSION,
+            "next_run": get_next_run_for_goal(goal_id),
         }
         send_email("confirmation_email", os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com"), context)
         logger.info(f"Confirmation email sent for goal: '{goal['goal_name']}'")
@@ -126,7 +121,8 @@ def send_startup_email():
         context = {
             "welcome_message": "Welcome to Mindbaboon!",
             "info": "Your system has started successfully.",
-            "quote": random.choice(MOTIVATIONAL_QUOTES)  # Updated to use dynamic quote
+            "quote": random.choice(MOTIVATIONAL_QUOTES),
+            "version": VERSION,
         }
         send_email("startup_email", os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com"), context)
 
@@ -143,12 +139,17 @@ def send_goal_reminder(goal_id):
             if goal["completed"] == 1 or goal["is_paused"] == 1:
                 logger.info(f"Goal {goal_id} is completed or paused.")
                 return
+            interval_args = ITERATION_INTERVALS.get(goal["iteration"]) or {}
+            next_check = datetime.now(TIMEZONE) + timedelta(**interval_args) if interval_args else None
             context = {
                 "goal_name": goal["goal_name"],
                 "next_steps": goal["next_steps"],
                 "iteration_url_yes": f"http://{get_server_host()}:5000/iteration/{goal_id}?completed=yes",
                 "iteration_url_no": f"http://{get_server_host()}:5000/iteration/{goal_id}?completed=no",
-                "quote": random.choice(MOTIVATIONAL_QUOTES)  # Updated to use dynamic quote
+                "quote": random.choice(MOTIVATIONAL_QUOTES),
+                "version": VERSION,
+                "iteration": goal["iteration"],
+                "next_check": next_check.strftime("%A %d. %B %Y") if next_check else None,
             }
             send_email("normal_email", os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com"), context)
             now = datetime.now(TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')

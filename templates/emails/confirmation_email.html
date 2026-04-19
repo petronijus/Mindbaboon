@@ -45,7 +45,19 @@
       margin-top: 20px;
       font-style: italic;
       color: black;
-      font-weight: normal; 
+      font-weight: normal;
+    }
+    .meta {
+      margin-top: 24px;
+      font-size: 0.95rem;
+      color: #9a9a9a;
+    }
+    .footer {
+      margin-top: 28px;
+      font-size: 0.75rem;
+      color: #bbb;
+      border-top: 1px solid #eee;
+      padding-top: 8px;
     }
   </style>
 </head>
@@ -58,6 +70,10 @@
     <h1>{{ next_steps }}</h1>
     <p>Me watching!</p>
     <p class="signature"><i>Mindbaboon!</i></p>
+    {% if next_run %}
+    <p class="meta">First check-in: <strong>{{ next_run }}</strong></p>
+    {% endif %}
+    <p class="footer">Mindbaboon v{{ version }}</p>
   </div>
 </body>
 </html>

@@ -51,7 +51,19 @@
       margin-top: 20px;
       font-style: italic;
       color: black;
-      font-weight: normal; 
+      font-weight: normal;
+    }
+    .meta {
+      margin-top: 24px;
+      font-size: 0.95rem;
+      color: #9a9a9a;
+    }
+    .footer {
+      margin-top: 28px;
+      font-size: 0.75rem;
+      color: #bbb;
+      border-top: 1px solid #eee;
+      padding-top: 8px;
     }
   </style>
 </head>
@@ -68,6 +80,10 @@
     </h2>
     <p>Me watching!</p>
     <p class="signature"><i>Mindbaboon!</i></p>
+    {% if next_check %}
+    <p class="meta">Next check-in ({{ iteration }}): <strong>{{ next_check }}</strong></p>
+    {% endif %}
+    <p class="footer">Mindbaboon v{{ version }}</p>
   </div>
 </body>
 </html>

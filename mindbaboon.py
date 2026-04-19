@@ -13,11 +13,8 @@ from scheduler import get_next_run_for_goal, send_email
 from config import ITERATION_INTERVALS, VERSION, MOTIVATIONAL_QUOTES
 
 
-# Add after imports
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
-if not logger.hasHandlers():
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-    logger.addHandler(logging.StreamHandler())
 
 # Load email from database and set it in environment variables
 default_email = get_setting("default_email")

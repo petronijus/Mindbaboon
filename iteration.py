@@ -7,14 +7,7 @@ from database import get_db_connection
 import pytz
 import logging
 
-# Set up logger and avoid duplicate handlers
 logger = logging.getLogger(__name__)
-if not logger.hasHandlers():
-    logger.setLevel(logging.DEBUG)
-    handler = logging.StreamHandler()
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
 
 # Define Prague timezone at the top
 TIMEZONE = pytz.timezone('Europe/Prague')
