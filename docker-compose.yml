@@ -6,21 +6,15 @@ services:
       - "5000:5000"
     volumes:
       - mindbaboon_data:/app/data
+    env_file:
+      - .env
     environment:
       - FLASK_APP=mindbaboon.py
-      - FLASK_ENV=developments
-      - FLASK_DEBUG=1
+      - FLASK_ENV=production
+      - FLASK_DEBUG=0
       - FLASK_RUN_HOST=0.0.0.0
-      - EMAIL_SMTP_SERVER=smtp.gmail.com
-      - EMAIL_SMTP_PORT=587
-      - EMAIL_USERNAME=you@example.com
-      - EMAIL_PASSWORD=***REMOVED***
-      - DEFAULT_TO_ADDRESS=you@example.com
-      - SERVER_HOST=192.168.0.101
       - TZ=Europe/Prague
     command: sh -c "python init_mindbaboon_db.py && python mindbaboon.py"
 
 volumes:
   mindbaboon_data:
-
-

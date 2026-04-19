@@ -7,6 +7,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import os
 from database import get_db_connection, get_setting, set_setting
 from iteration import iteration_bp
+from api import api_bp
 import logging
 from scheduler import get_next_run_for_goal, send_email
 from config import ITERATION_INTERVALS, VERSION, MOTIVATIONAL_QUOTES
@@ -33,6 +34,7 @@ from scheduler import (
 
 app = Flask(__name__)
 app.register_blueprint(iteration_bp)
+app.register_blueprint(api_bp)
 
 # 1. Start APScheduler once, near app startup
 def init_scheduler():
@@ -121,7 +123,9 @@ def index():
 @app.route("/add", methods=["GET", "POST"])
 def add_goal():
     if request.method == "POST":
-        goal_name = request.form["goal_name"]
+        goal_name = (request.form.get("goal_name") or "").strip()
+        if not goal_name:
+            return "goal_name is required", 400
         goal_description = request.form.get("goal_description", "")
         time_span = request.form.get("time_span", "")
         specific_date = request.form.get("specific_date") if time_span == "specific_date" else None
@@ -129,7 +133,7 @@ def add_goal():
         next_steps = request.form.get("next_steps", "")
         reward = request.form.get("reward", "")
 
-        now = datetime.now()  # For created_at
+        now = datetime.now()
 
         conn = get_db_connection()
         cur = conn.cursor()
@@ -181,7 +185,7 @@ def edit_goal(goal_id):
 
     if not goal:
         conn.close()
-        return "Goal not found.", 404
+        return jsonify({"error": "Goal not found"}), 404
 
     if request.method == "POST":
         goal_name = request.form["goal_name"]
@@ -238,27 +242,15 @@ def delete_goal():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-
-        # Delete history associated with the goal
         cursor.execute("DELETE FROM goal_history WHERE goal_id = ?", (goal_id,))
-
-        # Delete iteration history associated with the goal
         cursor.execute("DELETE FROM iteration_history WHERE iteration_id = ?", (goal_id,))
-
-        # Delete the goal itself
         cursor.execute("DELETE FROM goals WHERE id = ?", (goal_id,))
-
         conn.commit()
         conn.close()
-
-        # Remove the reminder job from APScheduler
         remove_reminder(goal_id)
+    except sqlite3.Error as e:
+        logger.error(f"DB error deleting goal {goal_id}: {e}")
 
-    except Exception as e:
-        # Optionally log the error for debugging purposes
-        print(f"Error occurred: {e}")
-    
-    # Redirect back to the index page
     return redirect(url_for("index"))
 
 @app.route("/settings", methods=["GET", "POST"])

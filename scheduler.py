@@ -208,10 +208,11 @@ def schedule_reminder(goal_id, iteration):
         logger.error(f"Failed to schedule job {job_id}: {e}")
 
 def remove_reminder(goal_id):
+    from apscheduler.jobstores.base import JobLookupError
     job_id = f"goal_{goal_id}"
     try:
         scheduler.remove_job(job_id)
-    except Exception:
+    except JobLookupError:
         pass
 
 def print_next_run_times():
