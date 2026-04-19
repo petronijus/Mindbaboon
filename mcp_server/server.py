@@ -71,25 +71,32 @@ def get_goal(goal_id: int) -> Any:
 @mcp.tool()
 def create_goal(
     goal_name: str,
-    iteration: str = "",
-    goal_description: str = "",
-    next_steps: str = "",
-    reward: str = "",
-    time_span: str = "",
+    goal_description: str,
+    time_span: str,
+    iteration: str,
+    next_steps: str,
+    reward: str,
     end_date: str = "",
 ) -> Any:
-    """Create a new goal and (if iteration set) schedule its reminder.
+    """Create a new goal and schedule its reminder.
 
-    iteration must be one of: "week", "2 weeks", "month" — or empty for no reminder.
-    time_span is free-form; set to "specific_date" with end_date=YYYY-MM-DD for a hard deadline.
+    ALL fields are required — the server rejects partial goals.
+
+    - goal_name: one-line title
+    - goal_description: short description (one sentence)
+    - time_span: "weeks" | "months" | "specific_date"
+    - iteration: "week" | "2 weeks" | "month"  (reminder cadence)
+    - next_steps: what you commit to do before the next check-in
+    - reward: what you'll give yourself
+    - end_date: REQUIRED (YYYY-MM-DD) when time_span="specific_date"
     """
     payload = {
         "goal_name": goal_name,
-        "iteration": iteration,
         "goal_description": goal_description,
+        "time_span": time_span,
+        "iteration": iteration,
         "next_steps": next_steps,
         "reward": reward,
-        "time_span": time_span,
         "end_date": end_date or None,
     }
     with _client() as c:
@@ -97,11 +104,32 @@ def create_goal(
 
 
 @mcp.tool()
-def update_goal(goal_id: int, updates: dict) -> Any:
-    """Patch fields on a goal. Allowed keys: goal_name, goal_description,
-    time_span, end_date, iteration, next_steps, reward, completed, is_paused."""
+def update_goal(
+    goal_id: int,
+    goal_name: str,
+    goal_description: str,
+    time_span: str,
+    iteration: str,
+    next_steps: str,
+    reward: str,
+    end_date: str = "",
+) -> Any:
+    """Full update of a goal — same required fields as create_goal.
+    For pausing or completing a goal, use snooze_goal/resume_goal/complete_iteration
+    instead. If you only know the goal_id, call get_goal first to read the current
+    values before changing individual fields.
+    """
+    payload = {
+        "goal_name": goal_name,
+        "goal_description": goal_description,
+        "time_span": time_span,
+        "iteration": iteration,
+        "next_steps": next_steps,
+        "reward": reward,
+        "end_date": end_date or None,
+    }
     with _client() as c:
-        return _unwrap(c.patch(f"/api/goals/{goal_id}", json=updates))
+        return _unwrap(c.patch(f"/api/goals/{goal_id}", json=payload))
 
 
 @mcp.tool()

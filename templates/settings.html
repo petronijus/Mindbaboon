@@ -4,7 +4,7 @@
   <h2>Settings</h2>
   <form method="POST">
     <div class="form-group">
-      <label for="email_address">Default Email Address for Notifications</label>
+      <label for="email_address">Default email for notifications</label>
       <input
         type="email"
         id="email_address"
@@ -13,6 +13,33 @@
         required
       />
     </div>
+
+    <h3>Iteration window</h3>
+    <p class="text-light small">All reminder emails fire at this weekday/time.
+      Changing the slot reschedules every active goal.</p>
+
+    <div class="form-inline-group">
+      <span class="form-label">day</span>
+      {% for i, name in weekdays %}
+        <label>
+          <input type="radio" name="iteration_weekday" value="{{ i }}"
+            {% if i == slot.weekday %}checked{% endif %}> {{ name }}
+        </label>
+      {% endfor %}
+    </div>
+
+    <div class="form-group">
+      <label for="iteration_hour">Hour (0–23)</label>
+      <input type="number" id="iteration_hour" name="iteration_hour"
+             min="0" max="23" value="{{ slot.hour }}" required>
+    </div>
+
+    <div class="form-group">
+      <label for="iteration_minute">Minute (0–59)</label>
+      <input type="number" id="iteration_minute" name="iteration_minute"
+             min="0" max="59" value="{{ slot.minute }}" required>
+    </div>
+
     <button type="submit" class="save-button">Save</button>
   </form>
 {% endblock %}

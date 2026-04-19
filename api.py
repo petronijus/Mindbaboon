@@ -34,6 +34,33 @@ logger = logging.getLogger(__name__)
 api_bp = Blueprint("api", __name__, url_prefix="/api")
 
 VALID_ITERATIONS = set(ITERATION_INTERVALS.keys())
+VALID_TIME_SPANS = {"weeks", "months", "specific_date"}
+REQUIRED_GOAL_FIELDS = ("goal_name", "goal_description", "time_span",
+                       "iteration", "next_steps", "reward")
+
+
+def _validate_goal_payload(data):
+    """Return error dict or None. All six user-facing fields must be present
+    and non-empty; time_span=specific_date requires end_date (YYYY-MM-DD)."""
+    if not isinstance(data, dict):
+        return {"error": "Body must be a JSON object"}
+    missing = [f for f in REQUIRED_GOAL_FIELDS
+               if not str(data.get(f, "")).strip()]
+    if missing:
+        return {"error": "missing required fields",
+                "missing": missing,
+                "required": list(REQUIRED_GOAL_FIELDS)}
+    if data["time_span"] not in VALID_TIME_SPANS:
+        return {"error": f"time_span must be one of {sorted(VALID_TIME_SPANS)}"}
+    if data["iteration"] not in VALID_ITERATIONS:
+        return {"error": f"iteration must be one of {sorted(VALID_ITERATIONS)}"}
+    if data["time_span"] == "specific_date":
+        ed = str(data.get("end_date", "")).strip()
+        try:
+            datetime.strptime(ed, "%Y-%m-%d")
+        except ValueError:
+            return {"error": "end_date (YYYY-MM-DD) is required when time_span=specific_date"}
+    return None
 
 
 def require_api_key(view):
@@ -126,21 +153,17 @@ def get_goal(goal_id):
 @require_api_key
 def create_goal():
     data = request.get_json(silent=True) or {}
-    goal_name = (data.get("goal_name") or "").strip()
-    if not goal_name:
-        return jsonify({"error": "goal_name is required"}), 400
+    err = _validate_goal_payload(data)
+    if err:
+        return jsonify(err), 400
 
-    iteration = data.get("iteration") or ""
-    if iteration and iteration not in VALID_ITERATIONS:
-        return jsonify(
-            {"error": f"invalid iteration; must be one of {sorted(VALID_ITERATIONS)}"}
-        ), 400
-
-    goal_description = data.get("goal_description", "")
-    time_span = data.get("time_span", "")
-    end_date = data.get("end_date") if time_span == "specific_date" else None
-    next_steps = data.get("next_steps", "")
-    reward = data.get("reward", "")
+    goal_name = data["goal_name"].strip()
+    iteration = data["iteration"]
+    goal_description = data["goal_description"]
+    time_span = data["time_span"]
+    end_date = data["end_date"] if time_span == "specific_date" else None
+    next_steps = data["next_steps"]
+    reward = data["reward"]
 
     conn = get_db_connection()
     try:
@@ -169,51 +192,57 @@ def create_goal():
     finally:
         conn.close()
 
-    if iteration:
-        schedule_reminder(goal_id, iteration)
+    schedule_reminder(goal_id, iteration)
 
     return jsonify(goal_to_dict(row)), 201
 
 
-@api_bp.route("/goals/<int:goal_id>", methods=["PATCH"])
+@api_bp.route("/goals/<int:goal_id>", methods=["PATCH", "PUT"])
 @require_api_key
 def update_goal(goal_id):
+    """Full-form update. All six fields required, same as creating a goal —
+    so nothing silently drops. For state toggles use the /snooze, /resume,
+    /complete endpoints instead."""
     data = request.get_json(silent=True) or {}
+    err = _validate_goal_payload(data)
+    if err:
+        return jsonify(err), 400
+
     conn = get_db_connection()
     try:
         row = conn.execute("SELECT * FROM goals WHERE id = ?", (goal_id,)).fetchone()
         if not row:
             return jsonify({"error": "Goal not found"}), 404
 
-        allowed = {
-            "goal_name",
-            "goal_description",
-            "time_span",
-            "end_date",
-            "iteration",
-            "next_steps",
-            "reward",
-            "completed",
-            "is_paused",
-        }
-        updates = {k: data[k] for k in data.keys() if k in allowed}
-        if "iteration" in updates and updates["iteration"] not in VALID_ITERATIONS:
-            return jsonify(
-                {"error": f"invalid iteration; must be one of {sorted(VALID_ITERATIONS)}"}
-            ), 400
+        end_date = data["end_date"] if data["time_span"] == "specific_date" else None
+        iteration_changed = data["iteration"] != row["iteration"]
 
-        if updates:
-            set_clause = ", ".join(f"{k} = ?" for k in updates.keys())
-            params = list(updates.values()) + [goal_id]
-            conn.execute(f"UPDATE goals SET {set_clause} WHERE id = ?", params)
-            conn.commit()
-
+        conn.execute(
+            """
+            UPDATE goals SET
+                goal_name = ?, goal_description = ?, time_span = ?, end_date = ?,
+                iteration = ?, next_steps = ?, reward = ?
+            WHERE id = ?
+            """,
+            (
+                data["goal_name"].strip(),
+                data["goal_description"],
+                data["time_span"],
+                end_date,
+                data["iteration"],
+                data["next_steps"],
+                data["reward"],
+                goal_id,
+            ),
+        )
+        conn.commit()
         row = conn.execute("SELECT * FROM goals WHERE id = ?", (goal_id,)).fetchone()
     finally:
         conn.close()
 
-    if "iteration" in updates and updates["iteration"]:
-        schedule_reminder(goal_id, updates["iteration"])
+    if iteration_changed:
+        remove_reminder(goal_id)
+        schedule_reminder(goal_id, data["iteration"], send_confirmation=False)
 
     return jsonify(goal_to_dict(row))
 

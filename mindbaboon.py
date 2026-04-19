@@ -5,11 +5,17 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify  #
 from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 import os
-from database import get_db_connection, get_setting, set_setting
+from database import (
+    get_db_connection,
+    get_setting,
+    set_setting,
+    get_iteration_slot,
+    set_iteration_slot,
+)
 from iteration import iteration_bp
 from api import api_bp
 import logging
-from scheduler import get_next_run_for_goal, send_email
+from scheduler import get_next_run_for_goal, send_email, reschedule_all_active
 from config import ITERATION_INTERVALS, VERSION, MOTIVATIONAL_QUOTES
 
 
@@ -32,6 +38,11 @@ from scheduler import (
 app = Flask(__name__)
 app.register_blueprint(iteration_bp)
 app.register_blueprint(api_bp)
+
+
+@app.context_processor
+def inject_globals():
+    return {"current_year": datetime.now().year, "version": VERSION}
 
 # 1. Start APScheduler once, near app startup
 def init_scheduler():
@@ -250,17 +261,36 @@ def delete_goal():
 
     return redirect(url_for("index"))
 
+WEEKDAYS = [(0, "Mon"), (1, "Tue"), (2, "Wed"), (3, "Thu"),
+            (4, "Fri"), (5, "Sat"), (6, "Sun")]
+
+
 @app.route("/settings", methods=["GET", "POST"])
 def settings():
     if request.method == "POST":
         email_address = request.form["email_address"]
         set_setting("default_email", email_address)
         os.environ["DEFAULT_TO_ADDRESS"] = email_address
-        # Redirect to the homepage with a success message
-        return redirect(url_for("index", message="Settings saved successfully!"))
+
+        old_slot = get_iteration_slot()
+        wd = int(request.form.get("iteration_weekday", old_slot["weekday"]))
+        hr = int(request.form.get("iteration_hour", old_slot["hour"]))
+        mn = int(request.form.get("iteration_minute", old_slot["minute"]))
+        set_iteration_slot(weekday=wd, hour=hr, minute=mn)
+
+        msg = "Settings saved."
+        if (wd, hr, mn) != (old_slot["weekday"], old_slot["hour"], old_slot["minute"]):
+            rescheduled = reschedule_all_active()
+            msg = f"Settings saved. Rescheduled {len(rescheduled)} goal(s)."
+        return redirect(url_for("index", message=msg))
 
     current_email = get_setting("default_email") or "example@domain.com"
-    return render_template("settings.html", current_email=current_email, version=VERSION)
+    return render_template(
+        "settings.html",
+        current_email=current_email,
+        slot=get_iteration_slot(),
+        weekdays=WEEKDAYS,
+    )
 
 
 
