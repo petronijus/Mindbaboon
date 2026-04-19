@@ -4,3 +4,5 @@ __pycache__
 /data
 data/mindbaboon.db
 *.db
+.DS_Store
+.claude/
