@@ -33,9 +33,8 @@ def iteration_view(goal_id):
         reward = request.form.get("reward", goal["reward"])  # Goal-specific
         
         # Calculate the next_run using ITERATION_INTERVALS
-        interval_args = ITERATION_INTERVALS.get(goal["iteration"])
-        next_run_minutes = interval_args["minutes"] if interval_args else 2  # Default to 2 minutes
-        next_run = datetime.now(TIMEZONE) + timedelta(minutes=next_run_minutes)
+        interval_args = ITERATION_INTERVALS.get(goal["iteration"]) or {"minutes": 2}
+        next_run = datetime.now(TIMEZONE) + timedelta(**interval_args)
         
 
         conn.execute("""
