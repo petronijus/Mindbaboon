@@ -1,4 +1,4 @@
-VERSION = "0.9.11"
+VERSION = "0.9.12"
 ITERATION_INTERVALS = {
     "week": {"weeks": 1},
     "2 weeks": {"weeks": 2},

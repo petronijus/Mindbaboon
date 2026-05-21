@@ -1,10 +1,12 @@
 # mindbaboon.py
 import sqlite3
 import random
-from flask import Flask, render_template, request, redirect, url_for, jsonify  # Removed duplicate "request"
-from datetime import datetime, timedelta
-from apscheduler.schedulers.background import BackgroundScheduler
 import os
+import logging
+from datetime import datetime
+
+from flask import Flask, render_template, request, redirect, url_for, jsonify
+
 from database import (
     get_db_connection,
     get_setting,
@@ -14,26 +16,24 @@ from database import (
 )
 from iteration import iteration_bp
 from api import api_bp
-import logging
-from scheduler import get_next_run_for_goal, send_email, reschedule_all_active
-from config import ITERATION_INTERVALS, VERSION, MOTIVATIONAL_QUOTES
+from scheduler import (
+    scheduler,
+    schedule_reminder,
+    remove_reminder,
+    send_startup_email,
+    get_next_run_for_goal,
+    reschedule_all_active,
+)
+from config import VERSION, MOTIVATIONAL_QUOTES
+from init_mindbaboon_db import initialize_database
 
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Load email from database and set it in environment variables
 default_email = get_setting("default_email")
 if default_email:
     os.environ["DEFAULT_TO_ADDRESS"] = default_email
-
-# Import the scheduler logic
-from scheduler import (
-    scheduler,           # The BackgroundScheduler instance
-    schedule_reminder,   # Function to add/replace a per-goal job
-    remove_reminder,     # Function to remove the per-goal job
-    send_startup_email   # Import the startup email function
-)
 
 app = Flask(__name__)
 app.register_blueprint(iteration_bp)
@@ -44,9 +44,8 @@ app.register_blueprint(api_bp)
 def inject_globals():
     return {"current_year": datetime.now().year, "version": VERSION}
 
-# 1. Start APScheduler once, near app startup
+
 def init_scheduler():
-    """Initialize the APScheduler instance"""
     try:
         logger.debug("Starting scheduler...")
         if not scheduler.running:
@@ -59,33 +58,6 @@ def init_scheduler():
         raise
 
 
-def create_tables():
-    conn = get_db_connection()
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS goals (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            goal_name TEXT NOT NULL,
-            goal_description TEXT,
-            time_span TEXT,
-            end_date TEXT,
-            iteration TEXT,
-            next_steps TEXT,
-            reward TEXT,
-            completed INTEGER NOT NULL DEFAULT 0,
-            is_paused INTEGER NOT NULL DEFAULT 0,
-            last_email_sent TIMESTAMP,
-            created_at TIMESTAMP NOT NULL,
-            last_reminder_at TIMESTAMP
-        );
-    """)
-    conn.commit()
-    conn.close()
-
-    
-
-# 3. Routes
-
-# -- Index (List All Goals) --
 @app.route("/")
 def index():
     message = request.args.get("message")
@@ -103,13 +75,11 @@ def index():
 
     random_quote = random.choice(MOTIVATIONAL_QUOTES)
 
-    # Convert sqlite3.Row objects to dictionaries
     goals = [dict(goal) for goal in goals]
 
-    # Calculate progress for each goal based on the interval between last_email_sent and next_run
     for goal in goals:
         last_reminder_at = goal.get('last_reminder_at')
-        next_run = get_next_run_for_goal(goal['id'])  # Fetch the next run from APScheduler
+        next_run = get_next_run_for_goal(goal['id'])
 
         if last_reminder_at and next_run:
             last_reminder = datetime.strptime(last_reminder_at, '%Y-%m-%d %H:%M:%S')
@@ -119,14 +89,12 @@ def index():
             progress = max(0, min(100, ((total_time - remaining_time) / total_time) * 100))
             goal['progress'] = progress
         else:
-            goal['progress'] = 0  # Default progress if no reminder or next run
+            goal['progress'] = 0
 
-        goal['next_run'] = next_run  # Add the next run to the goal for display
-
-
-
+        goal['next_run'] = next_run
 
     return render_template("index.html", goals=goals, motivational_quote=random_quote, message=message, version=VERSION)
+
 
 @app.route("/add", methods=["GET", "POST"])
 def add_goal():
@@ -172,12 +140,9 @@ def add_goal():
             None
         ))
         conn.commit()
-
-        # Get the auto-generated ID for the new goal
         goal_id = cur.lastrowid
         conn.close()
 
-        # Schedule the reminder for this newly created goal
         schedule_reminder(goal_id, iteration)
 
         return redirect(url_for("index"))
@@ -185,7 +150,6 @@ def add_goal():
     return render_template("add.html", version=VERSION)
 
 
-# -- Edit an Existing Goal --
 @app.route("/edit/<int:goal_id>", methods=["GET", "POST"])
 def edit_goal(goal_id):
     conn = get_db_connection()
@@ -196,18 +160,21 @@ def edit_goal(goal_id):
         return jsonify({"error": "Goal not found"}), 404
 
     if request.method == "POST":
-        goal_name = request.form["goal_name"]
-        goal_description = request.form["goal_description"]
-        time_span = request.form["time_span"]
+        goal_name = (request.form.get("goal_name") or "").strip()
+        if not goal_name:
+            conn.close()
+            return "goal_name is required", 400
+        goal_description = request.form.get("goal_description", "")
+        time_span = request.form.get("time_span", "")
         specific_date = request.form.get("specific_date") if time_span == "specific_date" else None
-        iteration = request.form["iteration"]
-        next_steps = request.form["next_steps"]
-        reward = request.form["reward"]
+        iteration = request.form.get("iteration", "")
+        next_steps = request.form.get("next_steps", "")
+        reward = request.form.get("reward", "")
         completed = 1 if request.form.get("completed") == "on" else 0
 
         conn.execute("""
             UPDATE goals
-            SET 
+            SET
                 goal_name = ?,
                 goal_description = ?,
                 time_span = ?,
@@ -231,7 +198,6 @@ def edit_goal(goal_id):
         conn.commit()
         conn.close()
 
-        # Reschedule the job if iteration changed (or just always reschedule)
         schedule_reminder(goal_id, iteration)
 
         return redirect(url_for("index"))
@@ -239,7 +205,7 @@ def edit_goal(goal_id):
     conn.close()
     return render_template("edit.html", goal=goal, version=VERSION)
 
-# -- Delete a Goal --
+
 @app.route('/delete_goal', methods=['POST'])
 def delete_goal():
     goal_id = request.form.get('goal_id')
@@ -249,10 +215,8 @@ def delete_goal():
 
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM goal_history WHERE goal_id = ?", (goal_id,))
-        cursor.execute("DELETE FROM iteration_history WHERE iteration_id = ?", (goal_id,))
-        cursor.execute("DELETE FROM goals WHERE id = ?", (goal_id,))
+        # FK ON DELETE CASCADE handles goal_history + iteration_history.
+        conn.execute("DELETE FROM goals WHERE id = ?", (goal_id,))
         conn.commit()
         conn.close()
         remove_reminder(goal_id)
@@ -260,6 +224,7 @@ def delete_goal():
         logger.error(f"DB error deleting goal {goal_id}: {e}")
 
     return redirect(url_for("index"))
+
 
 WEEKDAYS = [(0, "Mon"), (1, "Tue"), (2, "Wed"), (3, "Thu"),
             (4, "Fri"), (5, "Sat"), (6, "Sun")]
@@ -293,12 +258,14 @@ def settings():
     )
 
 
-
-
-# 4. Run the App
 if __name__ == "__main__":
-    create_tables()
+    import socket
+    # Prominent at startup so duplicate-instance issues are easy to spot in
+    # logs: grep for "STARTUP" and you should see exactly one line per real
+    # boot. Two lines close together = two processes running concurrently.
+    logger.info(f"STARTUP pid={os.getpid()} host={socket.gethostname()} version={VERSION}")
+    initialize_database()
     init_scheduler()
-    send_startup_email()  # call the scheduler.py version
+    send_startup_email()
     logger.info("Starting Flask application...")
     app.run(host='0.0.0.0', port=5000)

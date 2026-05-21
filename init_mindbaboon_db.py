@@ -5,20 +5,27 @@ import pytz
 
 TIMEZONE = pytz.timezone('Europe/Prague')
 
+
+def _column_names(conn, table):
+    return {row[1] for row in conn.execute(f"PRAGMA table_info({table})").fetchall()}
+
+
 def initialize_database():
     """
     Create the database schema for Mindbaboon, including goals, goal_history,
-    iteration_history, and apscheduler tables.
+    iteration_history, and apscheduler tables. Idempotent — safe to run on
+    every container start.
     """
-    # Create data directory if it doesn't exist
     data_dir = 'data'
     os.makedirs(data_dir, exist_ok=True)
 
-    # Connect to database in data directory
     db_path = os.path.join(data_dir, 'mindbaboon.db')
     conn = sqlite3.connect(db_path)
 
-    # Create the goals table
+    # The is_silenced flag: 1 means "don't send reminder emails for this goal
+    # right now". Set automatically when a reminder fires (awaiting user
+    # response), cleared when user responds via /iteration/<id> form. Can
+    # also be set/cleared via API /snooze and /resume.
     conn.execute("""
         CREATE TABLE IF NOT EXISTS goals (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -30,14 +37,18 @@ def initialize_database():
             next_steps TEXT,
             reward TEXT,
             completed INTEGER NOT NULL DEFAULT 0,
-            is_paused INTEGER NOT NULL DEFAULT 0,
+            is_silenced INTEGER NOT NULL DEFAULT 0,
             last_email_sent TIMESTAMP,
             created_at TIMESTAMP NOT NULL,
             last_reminder_at TIMESTAMP
         );
     """)
 
-    # Create the goal_history table
+    # Migration: existing DBs have `is_paused`. Rename to `is_silenced`.
+    cols = _column_names(conn, "goals")
+    if "is_paused" in cols and "is_silenced" not in cols:
+        conn.execute("ALTER TABLE goals RENAME COLUMN is_paused TO is_silenced")
+
     conn.execute("""
         CREATE TABLE IF NOT EXISTS goal_history (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -51,10 +62,8 @@ def initialize_database():
         );
     """)
 
-    # Add index for goal_id in goal_history
     conn.execute("CREATE INDEX IF NOT EXISTS idx_goal_history_goal_id ON goal_history (goal_id);")
 
-    # Create the iteration_history table
     conn.execute("""
         CREATE TABLE IF NOT EXISTS iteration_history (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -66,7 +75,6 @@ def initialize_database():
         );
     """)
 
-    # Create the settings table
     conn.execute("""
         CREATE TABLE IF NOT EXISTS settings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -75,11 +83,8 @@ def initialize_database():
         );
     """)
 
-
-    # Add index for iteration_id in iteration_history
     conn.execute("CREATE INDEX IF NOT EXISTS idx_iteration_history_iteration_id ON iteration_history (iteration_id);")
 
-    # Create the APScheduler jobs table
     conn.execute("""
         CREATE TABLE IF NOT EXISTS apscheduler_jobs (
             id VARCHAR(191) NOT NULL,
@@ -89,11 +94,11 @@ def initialize_database():
         );
     """)
 
-    # Add index for next_run_time in apscheduler_jobs
     conn.execute("CREATE INDEX IF NOT EXISTS idx_apscheduler_jobs_next_run_time ON apscheduler_jobs (next_run_time);")
 
     conn.commit()
     conn.close()
+
 
 if __name__ == "__main__":
     initialize_database()

@@ -6,6 +6,7 @@ All endpoints require an API key in the `X-API-Key` header matching the
 from functools import wraps
 from datetime import datetime
 import os
+import socket
 import secrets
 import logging
 
@@ -109,6 +110,8 @@ def health():
         {
             "status": "ok",
             "version": VERSION,
+            "pid": os.getpid(),
+            "hostname": socket.gethostname(),
             "scheduler_running": scheduler.running,
             "goals_total": goal_count,
             "goals_active": active_count,
@@ -255,8 +258,8 @@ def delete_goal(goal_id):
         row = conn.execute("SELECT id FROM goals WHERE id = ?", (goal_id,)).fetchone()
         if not row:
             return jsonify({"error": "Goal not found"}), 404
-        conn.execute("DELETE FROM goal_history WHERE goal_id = ?", (goal_id,))
-        conn.execute("DELETE FROM iteration_history WHERE iteration_id = ?", (goal_id,))
+        # FK ON DELETE CASCADE removes child rows from goal_history and
+        # iteration_history; see database.py for the pragma.
         conn.execute("DELETE FROM goals WHERE id = ?", (goal_id,))
         conn.commit()
     finally:
@@ -299,7 +302,7 @@ def complete_goal(goal_id):
         )
         conn.execute(
             """
-            UPDATE goals SET next_steps = ?, reward = ?, completed = ?, is_paused = 0
+            UPDATE goals SET next_steps = ?, reward = ?, completed = ?, is_silenced = 0
             WHERE id = ?
             """,
             (new_next_steps, new_reward, 1 if mark_done else row["completed"], goal_id),
@@ -322,11 +325,11 @@ def snooze_goal(goal_id):
         row = conn.execute("SELECT id FROM goals WHERE id = ?", (goal_id,)).fetchone()
         if not row:
             return jsonify({"error": "Goal not found"}), 404
-        conn.execute("UPDATE goals SET is_paused = 1 WHERE id = ?", (goal_id,))
+        conn.execute("UPDATE goals SET is_silenced = 1 WHERE id = ?", (goal_id,))
         conn.commit()
     finally:
         conn.close()
-    return jsonify({"ok": True, "goal_id": goal_id, "paused": True})
+    return jsonify({"ok": True, "goal_id": goal_id, "silenced": True})
 
 
 @api_bp.route("/goals/<int:goal_id>/resume", methods=["POST"])
@@ -339,14 +342,14 @@ def resume_goal(goal_id):
         ).fetchone()
         if not row:
             return jsonify({"error": "Goal not found"}), 404
-        conn.execute("UPDATE goals SET is_paused = 0 WHERE id = ?", (goal_id,))
+        conn.execute("UPDATE goals SET is_silenced = 0 WHERE id = ?", (goal_id,))
         conn.commit()
         iteration = row["iteration"]
     finally:
         conn.close()
     if iteration:
         schedule_reminder(goal_id, iteration)
-    return jsonify({"ok": True, "goal_id": goal_id, "paused": False})
+    return jsonify({"ok": True, "goal_id": goal_id, "silenced": False})
 
 
 @api_bp.route("/settings", methods=["GET"])

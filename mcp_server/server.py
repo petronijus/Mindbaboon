@@ -160,14 +160,16 @@ def complete_iteration(
 
 @mcp.tool()
 def snooze_goal(goal_id: int) -> Any:
-    """Pause reminders for a goal (is_paused=1). Reminders stop firing."""
+    """Silence reminder emails for a goal (sets is_silenced=1). The APScheduler
+    job keeps ticking on its cadence but the handler skips sending until the
+    flag is cleared via resume_goal or by responding to the iteration form."""
     with _client() as c:
         return _unwrap(c.post(f"/api/goals/{goal_id}/snooze"))
 
 
 @mcp.tool()
 def resume_goal(goal_id: int) -> Any:
-    """Resume reminders for a paused goal and reschedule the next run."""
+    """Clear the silenced flag so the next scheduled tick can send email again."""
     with _client() as c:
         return _unwrap(c.post(f"/api/goals/{goal_id}/resume"))
 

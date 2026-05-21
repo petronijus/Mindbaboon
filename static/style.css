@@ -342,6 +342,6 @@ hr {
   transition: width 0.5s ease;
 }
 
-.progress-bar.paused {
-  background-color: red;  /* Red color for paused goals */
+.progress-bar.silenced {
+  background-color: red;  /* Red bar = reminder sent, awaiting response */
 }

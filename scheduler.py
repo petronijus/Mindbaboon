@@ -4,56 +4,48 @@ from apscheduler.executors.pool import ThreadPoolExecutor
 from flask import render_template
 from datetime import datetime, timedelta
 import os
-from config import ITERATION_INTERVALS
-import threading
-from database import get_db_connection
-import pytz
 import logging
 import smtplib
-from email.message import EmailMessage
-from dotenv import load_dotenv
-import socket
 import random
-import re  # new import for regex
-from config import ITERATION_INTERVALS, VERSION, MOTIVATIONAL_QUOTES
+import re
+import socket
+from email.message import EmailMessage
 
-# Define Prague timezone
+import pytz
+from dotenv import load_dotenv
+
+from config import ITERATION_INTERVALS, VERSION, MOTIVATIONAL_QUOTES
+from database import get_db_connection
+
 TIMEZONE = pytz.timezone('Europe/Prague')
+
+# If we sent a reminder for a goal within this window, skip a re-fire — guards
+# against container-restart misfire races and any other accidental double-send.
+# Safe because the shortest legitimate cadence is 1 week.
+REMINDER_IDEMPOTENCY_WINDOW = timedelta(hours=1)
 
 logger = logging.getLogger(__name__)
 
-# SchedulerManager using double-check locking
-class SchedulerManager:
-    _instance = None
-    _lock = threading.Lock()
 
-    @classmethod
-    def get_scheduler(cls):
-        if cls._instance is None:
-            with cls._lock:
-                if cls._instance is None:
-                    os.makedirs('data', exist_ok=True)
-                    db_path = os.path.join('data', 'mindbaboon.db')
-                    jobstore_path = f'sqlite:///{db_path}'
-                    jobstores = {'default': SQLAlchemyJobStore(url=jobstore_path)}
-                    executors = {'default': ThreadPoolExecutor(20)}
-                    job_defaults = {'coalesce': True, 'max_instances': 1, 'misfire_grace_time': 60}
-                    cls._instance = BackgroundScheduler(
-                        jobstores=jobstores,
-                        executors=executors,
-                        job_defaults=job_defaults,
-                        timezone=TIMEZONE
-                    )
-        return cls._instance
+def _build_scheduler():
+    os.makedirs('data', exist_ok=True)
+    db_path = os.path.join('data', 'mindbaboon.db')
+    return BackgroundScheduler(
+        jobstores={'default': SQLAlchemyJobStore(url=f'sqlite:///{db_path}')},
+        executors={'default': ThreadPoolExecutor(20)},
+        job_defaults={'coalesce': True, 'max_instances': 1, 'misfire_grace_time': 60},
+        timezone=TIMEZONE,
+    )
 
-scheduler = SchedulerManager.get_scheduler()
 
-# Load environment variables once
+scheduler = _build_scheduler()
+
 load_dotenv()
 EMAIL_SMTP_SERVER = os.getenv("EMAIL_SMTP_SERVER", "smtp.gmail.com")
 EMAIL_SMTP_PORT = int(os.getenv("EMAIL_SMTP_PORT", 587))
 EMAIL_USERNAME = os.getenv("EMAIL_USERNAME")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
+
 
 def get_server_host():
     host = os.getenv("SERVER_HOST")
@@ -63,6 +55,7 @@ def get_server_host():
         except Exception:
             host = "localhost"
     return host
+
 
 def _fmt_day(dt):
     """Pretty short date like 'Saturday 3. May'. No year, no time."""
@@ -76,7 +69,7 @@ def _base_url():
 
 
 def _other_active_goals(exclude_id):
-    """List other active (not paused, not completed) goals with their next_run ISO and pretty date."""
+    """List other active (not completed) goals with their next_run ISO and pretty date."""
     conn = get_db_connection()
     try:
         rows = conn.execute(
@@ -103,14 +96,13 @@ def _other_active_goals(exclude_id):
 
 def render_email(email_type, context):
     template_name = f"emails/{email_type}.html"
-    # Use subject from context if provided, else set default value.
     subject = context.get("subject", None)
     body = render_template(template_name, **context)
-    # If subject is not provided, try to extract from <title> tag in the template.
     if subject is None:
         match = re.search(r'<title>\s*(.*?)\s*</title>', body, re.IGNORECASE | re.DOTALL)
         subject = match.group(1) if match else "Mindbaboon Notification"
     return subject, body
+
 
 def send_email(email_type, to_address, context):
     subject, body = render_email(email_type, context)
@@ -127,6 +119,7 @@ def send_email(email_type, to_address, context):
         logger.info(f"Email '{email_type}' sent successfully to {to_address}.")
     except Exception as e:
         logger.error(f"Failed to send '{email_type}' email to {to_address}: {e}")
+
 
 def send_confirmation_email(goal_id):
     logger.info(f"=== send_confirmation_email START for goal_id: {goal_id} ===")
@@ -157,10 +150,30 @@ def send_confirmation_email(goal_id):
         conn.close()
         logger.info(f"=== send_confirmation_email END for goal_id: {goal_id} ===")
 
+
+# If a startup email was sent within this window, don't send another. Catches
+# the case where two app processes start nearly simultaneously (multiple
+# containers/replicas pointing at the same DB).
+STARTUP_EMAIL_DEDUPE_WINDOW = timedelta(minutes=5)
+
+
 def send_startup_email():
-    """New function to send a startup email using the email template's title for subject."""
     from mindbaboon import app  # Avoid circular dependency
+    from database import get_setting, set_setting
     with app.app_context():
+        last = get_setting("last_startup_email_at")
+        if last:
+            try:
+                last_dt = datetime.strptime(last, '%Y-%m-%d %H:%M:%S')
+                if datetime.now() - last_dt < STARTUP_EMAIL_DEDUPE_WINDOW:
+                    logger.warning(
+                        f"Skipping startup email — another instance sent one at {last} "
+                        f"(within {STARTUP_EMAIL_DEDUPE_WINDOW}). "
+                        f"This typically means two app processes are running against the same DB."
+                    )
+                    return
+            except ValueError:
+                pass
         context = {
             "welcome_message": "Welcome to Mindbaboon!",
             "info": "Your system has started successfully.",
@@ -169,6 +182,19 @@ def send_startup_email():
             "home_url": _base_url(),
         }
         send_email("startup_email", os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com"), context)
+        set_setting("last_startup_email_at", datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+
+
+def _recently_sent(last_email_sent_str):
+    """True if last_email_sent_str timestamp is within the idempotency window."""
+    if not last_email_sent_str:
+        return False
+    try:
+        last = datetime.strptime(last_email_sent_str, '%Y-%m-%d %H:%M:%S')
+    except (ValueError, TypeError):
+        return False
+    return datetime.now() - last < REMINDER_IDEMPOTENCY_WINDOW
+
 
 def send_goal_reminder(goal_id):
     logger.info(f"=== send_goal_reminder START for goal_id: {goal_id} ===")
@@ -180,8 +206,15 @@ def send_goal_reminder(goal_id):
             if not goal:
                 logger.warning(f"No goal found with ID {goal_id}.")
                 return
-            if goal["completed"] == 1 or goal["is_paused"] == 1:
-                logger.info(f"Goal {goal_id} is completed or paused.")
+            if goal["completed"] == 1 or goal["is_silenced"] == 1:
+                logger.info(f"Goal {goal_id} is completed or silenced.")
+                return
+            # Idempotency: skip if a reminder went out within the last hour.
+            if _recently_sent(goal["last_email_sent"]):
+                logger.warning(
+                    f"Skipping reminder for goal {goal_id}: last_email_sent "
+                    f"{goal['last_email_sent']} is within idempotency window."
+                )
                 return
             interval_args = ITERATION_INTERVALS.get(goal["iteration"]) or {}
             next_check = datetime.now(TIMEZONE) + timedelta(**interval_args) if interval_args else None
@@ -200,9 +233,12 @@ def send_goal_reminder(goal_id):
                 "other_goals": _other_active_goals(goal_id),
             }
             send_email("normal_email", os.getenv("DEFAULT_TO_ADDRESS", "example@domain.com"), context)
-            now = datetime.now(TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')
-            conn.execute("UPDATE goals SET last_reminder_at = ? WHERE id = ?", (now, goal_id))
-            conn.execute("UPDATE goals SET is_paused = 1 WHERE id = ?", (goal_id,))
+            now_str = datetime.now(TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')
+            conn.execute(
+                "UPDATE goals SET last_reminder_at = ?, last_email_sent = ?, is_silenced = 1 "
+                "WHERE id = ?",
+                (now_str, now_str, goal_id),
+            )
             conn.commit()
             logger.info(f"Reminder sent for goal: '{goal['goal_name']}'")
         except Exception as e:
@@ -210,6 +246,7 @@ def send_goal_reminder(goal_id):
         finally:
             conn.close()
     logger.info(f"=== send_goal_reminder END for goal_id: {goal_id} ===")
+
 
 def get_next_run_for_goal(goal_id):
     conn = get_db_connection()
@@ -219,6 +256,7 @@ def get_next_run_for_goal(goal_id):
     if result and result["next_run_time"]:
         return datetime.fromtimestamp(result["next_run_time"], TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')
     return None
+
 
 def next_iteration_slot(after=None):
     """Next occurrence of the globally-configured iteration window (weekday+time) strictly after `after`."""
@@ -290,6 +328,7 @@ def reschedule_all_active():
         results.append((gid, job.next_run_time.isoformat() if job else None))
     return results
 
+
 def remove_reminder(goal_id):
     from apscheduler.jobstores.base import JobLookupError
     job_id = f"goal_{goal_id}"
@@ -298,22 +337,6 @@ def remove_reminder(goal_id):
     except JobLookupError:
         pass
 
-def print_next_run_times():
-    for job in scheduler.get_jobs():
-        logger.info(f"Job {job.id} next run time: {job.next_run_time}")
-
-def schedule_print_next_run_times():
-    scheduler.add_job(
-        func=print_next_run_times,
-        trigger="interval",
-        id="print_next_run_times",
-        minutes=1,
-        replace_existing=True,
-        next_run_time=datetime.now(TIMEZONE)
-    )
-
-# Schedule periodic printing of next run times
-schedule_print_next_run_times()
 
 if __name__ == "__main__":
     scheduler.start()
