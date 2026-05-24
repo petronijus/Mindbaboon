@@ -13,28 +13,26 @@
             name="goal_name"
             class="input-big"
             placeholder="Tell me your goal."
-            onfocus="this.placeholder=''"
-            onblur="this.placeholder='Tell me your goal.'"
+            data-placeholder="Tell me your goal."
             required
           >
         <hr class="divider">
 
       <!-- Single-sentence description -->
       <div class="form-group">
-        <textarea 
-          type="text" 
-          id="goal_description" 
-          name="goal_description" 
-          maxlength="200" 
+        <textarea
+          type="text"
+          id="goal_description"
+          name="goal_description"
+          maxlength="200"
           class="input-medium"
           rows="1"
           placeholder="Explain in one sentence."
-          onfocus="this.placeholder=''"
-          onblur="this.placeholder='Explain in one sentence.'"
+          data-placeholder="Explain in one sentence."
           required
         ></textarea>
         <p class="text-light small">200 chars</p>
-        
+
       </div>
 
       <!-- Time Span Options -->
@@ -61,17 +59,6 @@
         >
       </div>
 
-      <script>
-        // JavaScript to toggle specific date input visibility
-        document.querySelectorAll('input[name="time_span"]').forEach(input => {
-          input.addEventListener('change', function() {
-            const specificDateContainer = document.getElementById('specific-date-container');
-            specificDateContainer.style.display = this.value === 'specific_date' ? 'block' : 'none';
-          });
-        });
-      </script>
-
-
       <!-- Iteration Options -->
       <div class="form-inline-group">
         <span class="form-label">iteration</span>
@@ -88,31 +75,29 @@
 
       <!-- Next Step -->
       <div class="form-group">
-        <textarea 
-          id="next_steps" 
-          name="next_steps" 
-          maxlength="64" 
+        <textarea
+          id="next_steps"
+          name="next_steps"
+          maxlength="64"
           class="input-medium"
           rows="1"
           placeholder="Next steps: What needs to be done till next iteration?"
-          onfocus="this.placeholder=''"
-          onblur="this.placeholder='Next steps: What needs to be done till next iteration?'"
+          data-placeholder="Next steps: What needs to be done till next iteration?"
         ></textarea>
         <p class="text-light small">64 chars</p>
       </div>
 
       <!-- Reward -->
       <div class="form-group">
-        <textarea  
-          type="text" 
-          id="reward" 
-          name="reward" 
-          maxlength="64" 
+        <textarea
+          type="text"
+          id="reward"
+          name="reward"
+          maxlength="64"
           class="input-medium"
           rows="1"
           placeholder="How do I reward myself."
-          onfocus="this.placeholder=''"
-          onblur="this.placeholder='How do I reward myself.'"
+          data-placeholder="How do I reward myself."
         ></textarea>
         <p class="text-light small">64 chars</p>
       </div>
@@ -122,4 +107,8 @@
     </form>
   </div>
 </div>
+{% endblock %}
+
+{% block page_scripts %}
+<script src="{{ url_for('static', filename='page-form.js') }}"></script>
 {% endblock %}

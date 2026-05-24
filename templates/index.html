@@ -8,7 +8,7 @@
 
 <p class="motivational-quote">
   {{ motivational_quote }}
-  <button id="add-goal-button">
+  <button id="add-goal-button" type="button" data-href="{{ url_for('add_goal') }}">
     <img src="{{ url_for('static', filename='button.svg') }}" alt="Add Goal">
   </button>
 </p>
@@ -58,11 +58,8 @@
   <p>No goals yet. <a href="{{ url_for('add_goal') }}">Add one</a>.</p>
 {% endif %}
 
-<script>
+{% endblock %}
 
-  document.getElementById('add-goal-button').addEventListener('click', function() {
-    window.location.href = "{{ url_for('add_goal') }}";
-  });
-</script>
-
+{% block page_scripts %}
+<script src="{{ url_for('static', filename='page-index.js') }}"></script>
 {% endblock %}

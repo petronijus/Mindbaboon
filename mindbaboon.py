@@ -86,12 +86,11 @@ Talisman(
         # typekit inlines woff2 as data: URIs after the stylesheet loads
         "font-src": ["'self'", "data:", "https://use.typekit.net", "https://p.typekit.net"],
         "img-src": ["'self'", "data:"],
-        # TODO: replace inline <script> blocks + onclick/onfocus handlers in
-        # templates with addEventListener (or nonce per script tag) so we can
-        # drop 'unsafe-inline'. Accepted tradeoff: single-user app behind
-        # Google OAuth + email allowlist; XSS surface limited to escaped form
-        # inputs. CSP still blocks cross-origin script loading.
-        "script-src": ["'self'", "'unsafe-inline'"],
+        # All page-specific JS lives in static/*.js (page-form.js,
+        # page-edit.js, page-iteration.js, page-index.js, placeholder-toggle.js).
+        # Inline event handlers in templates replaced with addEventListener.
+        # Jinja interpolation passes through data-* attributes.
+        "script-src": "'self'",
         "form-action": ["'self'", "https://accounts.google.com"],
         "frame-ancestors": "'none'",
     },

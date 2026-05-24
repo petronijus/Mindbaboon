@@ -2,12 +2,6 @@
 {% block content %}
 <div class="add-goal-page">
   <div class="goal-form-container">
-    <!-- 
-      The route is /edit/<goal_id>, so we submit back to edit_goal.
-      Make sure to pass the correct goal_id in the form action if needed
-      or rely on the route param. For example:
-      action="{{ url_for('edit_goal', goal_id=goal['id']) }}"
-    -->
     <form method="POST" action="{{ url_for('edit_goal', goal_id=goal['id']) }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
@@ -18,51 +12,50 @@
           name="goal_name"
           class="input-big"
           placeholder="Tell me your goal."
-          onfocus="this.placeholder=''"
-          onblur="this.placeholder='Tell me your goal.'"
+          data-placeholder="Tell me your goal."
           value="{{ goal['goal_name'] }}"
           required
         >
         <hr class="divider">
-      
+
       <!-- Single-sentence description -->
       <div class="form-group">
-        <textarea 
-          type="text" 
-          id="goal_description" 
-          name="goal_description" 
-          maxlength="200" 
+        <textarea
+          type="text"
+          id="goal_description"
+          name="goal_description"
+          maxlength="200"
           class="input-medium"
           rows="1"
           required
         >{{ goal['goal_description'] }}</textarea>
         <p class="text-light small">200 chars</p>
-        
+
       </div>
 
       <!-- Time Span Options -->
       <div class="form-inline-group">
         <span class="form-label">time span</span>
         <label>
-          <input 
-            type="radio" 
-            name="time_span" 
-            value="weeks" 
+          <input
+            type="radio"
+            name="time_span"
+            value="weeks"
             {% if goal['time_span'] == 'weeks' %}checked{% endif %}
           > weeks
         </label>
         <label>
-          <input 
-            type="radio" 
-            name="time_span" 
+          <input
+            type="radio"
+            name="time_span"
             value="months"
             {% if goal['time_span'] == 'months' %}checked{% endif %}
           > months
         </label>
         <label>
-          <input 
-            type="radio" 
-            name="time_span" 
+          <input
+            type="radio"
+            name="time_span"
             value="specific_date"
             {% if goal['time_span'] == 'specific_date' %}checked{% endif %}
           > specific date
@@ -79,17 +72,6 @@
           value="{{ goal['specific_date'] }}"
         >
       </div>
-
-      <script>
-        // JavaScript to toggle specific date input visibility
-        document.querySelectorAll('input[name="time_span"]').forEach(input => {
-          input.addEventListener('change', function() {
-            const specificDateContainer = document.getElementById('specific-date-container');
-            specificDateContainer.style.display = this.value === 'specific_date' ? 'block' : 'none';
-          });
-        });
-      </script>
-
 
       <!-- Iteration Options -->
       <div class="form-inline-group">
@@ -122,10 +104,10 @@
 
       <!-- Next Step -->
       <div class="form-group">
-        <textarea 
-          id="next_steps" 
-          name="next_steps" 
-          maxlength="64" 
+        <textarea
+          id="next_steps"
+          name="next_steps"
+          maxlength="64"
           class="input-medium"
           rows="1"
         >{{ goal['next_steps'] }}</textarea>
@@ -134,11 +116,11 @@
 
       <!-- Reward -->
       <div class="form-group">
-        <textarea  
-          type="text" 
-          id="reward" 
-          name="reward" 
-          maxlength="64" 
+        <textarea
+          type="text"
+          id="reward"
+          name="reward"
+          maxlength="64"
           class="input-medium"
           rows="1"
         >{{ goal['reward'] }}</textarea>
@@ -167,7 +149,7 @@
     <!-- Iteration History Section -->
     <div class="form-group">
       <h2>History</h2>
-      <table id="iteration-history">
+      <table id="iteration-history" data-goal-id="{{ goal.id }}">
         <thead>
           <tr>
             <th>date</th>
@@ -182,46 +164,11 @@
         </tbody>
       </table>
     </div>
-    
-    <script>
-      document.addEventListener('DOMContentLoaded', function () {
-        const goalId = "{{ goal.id }}"; // Add quotes to make it a valid JavaScript string
-    
-        // Helper function to format timestamp as dd:mm:yy
-        function formatTimestamp(ts) {
-          const date = new Date(ts);
-          const dd = ('0' + date.getDate()).slice(-2);
-          const mm = ('0' + (date.getMonth() + 1)).slice(-2);
-          const yy = date.getFullYear().toString().slice(-2);
-          return dd + '/' + mm + '/' + yy;
-        }
-
-        function loadGoalHistory() {
-          fetch(`/goal/${goalId}/history`)
-            .then(response => response.json())
-            .then(data => {
-              const tbody = document.getElementById('iteration-history').querySelector('tbody');
-              tbody.innerHTML = '';
-              data.forEach(row => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                  <td>${ row.timestamp ? formatTimestamp(row.timestamp) : 'N/A' }</td>
-                  <td>${row.completed || 'N/A'}</td>
-                  <td>${row.was_done || 'N/A'}</td>
-                  <td>${row.next_steps || 'N/A'}</td>
-                  <td>${row.reward || 'N/A'}</td>
-                `;
-                tbody.appendChild(tr);
-              });
-            })
-            .catch(error => console.error('Error loading goal history:', error));
-        }
-    
-        // Load goal history on page load
-        loadGoalHistory();
-      });
-    </script>
   </div>
-    
+
 {% endblock %}
 
+{% block page_scripts %}
+<script src="{{ url_for('static', filename='page-form.js') }}"></script>
+<script src="{{ url_for('static', filename='page-edit.js') }}"></script>
+{% endblock %}
