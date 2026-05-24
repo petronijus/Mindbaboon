@@ -81,11 +81,18 @@ Talisman(
     referrer_policy="strict-origin-when-cross-origin",
     content_security_policy={
         "default-src": "'self'",
-        "style-src": ["'self'", "'unsafe-inline'", "https://use.typekit.net"],
-        "font-src": ["'self'", "https://use.typekit.net", "https://p.typekit.net"],
+        # typekit serves CSS from use.typekit.net AND p.typekit.net (sharded)
+        "style-src": ["'self'", "'unsafe-inline'", "https://use.typekit.net", "https://p.typekit.net"],
+        # typekit inlines woff2 as data: URIs after the stylesheet loads
+        "font-src": ["'self'", "data:", "https://use.typekit.net", "https://p.typekit.net"],
         "img-src": ["'self'", "data:"],
-        "script-src": "'self'",
-        "form-action": "'self' https://accounts.google.com",
+        # TODO: replace inline <script> blocks + onclick/onfocus handlers in
+        # templates with addEventListener (or nonce per script tag) so we can
+        # drop 'unsafe-inline'. Accepted tradeoff: single-user app behind
+        # Google OAuth + email allowlist; XSS surface limited to escaped form
+        # inputs. CSP still blocks cross-origin script loading.
+        "script-src": ["'self'", "'unsafe-inline'"],
+        "form-action": ["'self'", "https://accounts.google.com"],
         "frame-ancestors": "'none'",
     },
     content_security_policy_nonce_in=None,
