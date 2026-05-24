@@ -5,7 +5,7 @@ import os
 import logging
 from datetime import datetime, timedelta
 
-from flask import Flask, render_template, request, redirect, url_for, jsonify, session
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session, has_request_context
 from flask_wtf.csrf import CSRFProtect
 from flask_talisman import Talisman
 from flask_limiter import Limiter
@@ -112,10 +112,14 @@ def _make_session_permanent():
 
 @app.context_processor
 def inject_globals():
+    # `session` requires a request context. Email templates render in app
+    # context only (startup_email, confirmation_email, reminder), so guard
+    # with has_request_context() — otherwise the app crashes at startup.
+    user = session.get("user") if has_request_context() else None
     return {
         "current_year": datetime.now().year,
         "version": VERSION,
-        "current_user": session.get("user"),
+        "current_user": user,
     }
 
 
