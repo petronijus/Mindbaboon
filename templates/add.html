@@ -4,6 +4,7 @@
   <!-- Form container -->
   <div class="goal-form-container">
     <form method="POST" action="{{ url_for('add_goal') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
       <!-- Large heading-style input -->
           <input

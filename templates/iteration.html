@@ -9,6 +9,7 @@
     </div>
 
     <form method="POST" class="form-group">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
       <!-- Time Span Options -->
       <div class="form-inline-group">

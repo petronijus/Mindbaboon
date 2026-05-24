@@ -65,7 +65,12 @@ def _fmt_day(dt):
 
 
 def _base_url():
-    return f"http://{get_server_host()}:5000"
+    host = get_server_host()
+    # Public FQDN (has a dot, not RFC1918 / loopback) → HTTPS without port,
+    # served by Cloudflare. Anything else (LAN/dev) → HTTP with :5000.
+    if "." in host and not host.startswith(("127.", "192.168.", "10.", "172.16.", "172.17.", "172.18.", "172.19.", "172.20.", "172.21.", "172.22.", "172.23.", "172.24.", "172.25.", "172.26.", "172.27.", "172.28.", "172.29.", "172.30.", "172.31.")):
+        return f"https://{host}"
+    return f"http://{host}:5000"
 
 
 def _other_active_goals(exclude_id):

@@ -71,6 +71,18 @@ Timezone is `Europe/Prague` everywhere (`pytz.timezone('Europe/Prague')` in both
 
 `require_api_key` decorator checks `X-API-Key` against `MINDBABOON_API_KEY` with `secrets.compare_digest`. If the env var is unset the endpoint returns 503 — so a misconfigured `.env` fails closed, not open. `/api/health` is the only unauthenticated endpoint.
 
+### UI auth (Google OAuth)
+
+`auth.py` defines `auth_bp` and `require_login` decorator. Flow uses Authlib's Google OAuth client with PKCE — `/login` → `/login/google` (Authlib redirect) → `/oauth2/callback`. The callback verifies the ID token claims, enforces `email_verified=true`, and checks the email against `ALLOWED_EMAILS` (lowercase set) before populating `session['user']`. Session cookies use the `__Host-` prefix, Secure, HttpOnly, SameSite=Lax, 30-day lifetime.
+
+Security middleware wired in `mindbaboon.py`:
+- `ProxyFix(x_for=1, x_proto=1, x_host=1)` — required so `url_for(_external=True)` produces HTTPS URLs that match the GCP redirect URI (Cloudflare terminates TLS, forwards HTTP)
+- `CSRFProtect(app)` + `csrf.exempt(api_bp)` — UI POSTs need `{{ csrf_token() }}` hidden input, API stays exempt
+- `Talisman` — HSTS, CSP (allows typekit.net for fonts + form-action to accounts.google.com for OAuth redirect), X-Frame-Options=DENY, Referrer-Policy
+- `Flask-Limiter` — memory-backed, ready for `@limiter.limit(...)` decorators
+
+Adding a new UI route: `@require_login` on the view, `{{ csrf_token() }}` in any POST form template. Adding a new API route: register on `api_bp` and use `@require_api_key` — CSRF + login decorators don't apply.
+
 Goal create/update both require the **full six-field payload** (`goal_name`, `goal_description`, `time_span`, `iteration`, `next_steps`, `reward`, plus `end_date` when `time_span=="specific_date"`). For state changes use the dedicated endpoints — `/complete`, `/snooze`, `/resume` — they don't take the full form.
 
 ## Conventions worth knowing

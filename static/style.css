@@ -345,3 +345,22 @@ hr {
 .progress-bar.silenced {
   background-color: red;  /* Red bar = reminder sent, awaiting response */
 }
+
+/* --- Auth UI --- */
+.inline-form { display: inline; margin: 0; padding: 0; }
+.link-button {
+  background: none; border: none; padding: 0; cursor: pointer;
+  color: inherit; font: inherit; text-decoration: underline;
+}
+.login-page { text-align: center; padding-top: 4rem; }
+.google-signin {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border: 1px solid currentColor;
+  text-decoration: none;
+  font-weight: bold;
+}
+.flashes { list-style: none; padding: 0; margin: 1rem 0; }
+.flash { padding: 0.75rem 1rem; margin-bottom: 0.5rem; }
+.flash-error { background: rgba(255, 0, 0, 0.15); color: #ff6666; }
+.flash-success { background: rgba(0, 255, 0, 0.1); color: #66ff66; }

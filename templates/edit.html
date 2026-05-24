@@ -9,7 +9,8 @@
       action="{{ url_for('edit_goal', goal_id=goal['id']) }}"
     -->
     <form method="POST" action="{{ url_for('edit_goal', goal_id=goal['id']) }}">
-      
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
       <!-- Large heading-style input -->
         <input
           type="text"

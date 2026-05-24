@@ -5,9 +5,11 @@ cadence (week / 2 weeks / month), and the app emails you to check in.
 Responding to the email feeds a small history log so you can see the
 cycle of attempts over time.
 
-Stack: Flask + SQLite + APScheduler, packaged as Docker. Includes a REST
-API and an MCP server so you can manage goals from an LLM client
-(e.g. Claude Code) or any HTTP tool.
+Stack: Flask + SQLite + APScheduler, packaged as Docker. UI gated behind
+Google OAuth (email allowlist). Includes a REST API and an MCP server so
+you can manage goals from an LLM client (e.g. Claude Code) or any HTTP
+tool — the API uses an independent `X-API-Key` so MCP/cron jobs keep
+working without browser sessions.
 
 ## Architecture
 
@@ -81,6 +83,42 @@ and reminder emails for the same goal within an hour are skipped
 (`WARNING - Skipping reminder for goal X`). If you see those warnings,
 you have two instances and should track down the second one.
 
+## Authentication
+
+UI is gated behind **Google OAuth 2.0** (authorization code flow with
+PKCE). On first visit to any UI route, an unauthenticated user is
+redirected to `/login`, signs in with Google, and the backend verifies:
+
+1. ID token signature against Google JWKS (via Authlib)
+2. `email_verified=true` claim
+3. Email is in `ALLOWED_EMAILS` (lowercase exact match)
+
+A 30-day Flask session cookie (`__Host-` prefixed, Secure+HttpOnly+
+SameSite=Lax) is set on success. Logout is POST-only with CSRF token.
+
+**API endpoints (`/api/...`) are NOT gated by OAuth** — they keep the
+`X-API-Key` header check from `api.py`. This lets MCP servers, cron
+jobs, and curl scripts keep working independently of browser sessions.
+
+### Setup (Google OAuth)
+
+1. https://console.cloud.google.com/ → APIs & Services → Credentials
+2. Create OAuth 2.0 Client ID, type **Web application**
+3. Authorized redirect URI: `https://<SERVER_HOST>/oauth2/callback`
+4. Drop `GOOGLE_OAUTH_CLIENT_ID` + `GOOGLE_OAUTH_CLIENT_SECRET` into `.env`
+5. Set `ALLOWED_EMAILS=you@example.com,...` and `FLASK_SECRET_KEY=...`
+
+### Defense in depth (recommended)
+
+For belt-and-suspenders security, add a **Cloudflare Access** policy
+in the Zero Trust dashboard on the same hostname. Cloudflare gates the
+edge with your email allowlist before any request hits the docker host.
+The app's own OAuth still works for direct LAN/Tailscale access.
+
+Security headers (HSTS, CSP, X-Frame-Options, etc.) are set by
+Flask-Talisman. CSRF tokens via Flask-WTF on every POST form.
+Rate limiting on `/oauth2/callback` via Flask-Limiter.
+
 ## REST API
 
 Base URL `/api`. Every endpoint except `/api/health` requires the
@@ -126,6 +164,9 @@ goals, mark iterations done, snooze, and query state. Setup is in
 | `DEFAULT_TO_ADDRESS` | Who receives reminders |
 | `SERVER_HOST` | Hostname used in email reminder links |
 | `MINDBABOON_API_KEY` | Required to call `/api/...` (except `/health`) |
+| `FLASK_SECRET_KEY` | 32-byte hex, signs session cookies. Hard-fail if missing |
+| `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET` | Google OAuth Web client |
+| `ALLOWED_EMAILS` | Comma-separated lowercase emails permitted to sign in |
 | `TZ` | Timezone for scheduler (default `Europe/Prague`) |
 
 Never commit `.env`. It's in `.gitignore`. `docker-compose.yml` loads it

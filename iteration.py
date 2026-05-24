@@ -2,6 +2,7 @@ from config import ITERATION_INTERVALS, VERSION
 from flask import Blueprint, request, render_template, redirect, url_for, jsonify
 from datetime import datetime, timedelta
 from database import get_db_connection
+from auth import require_login
 import pytz
 import logging
 
@@ -13,6 +14,7 @@ iteration_bp = Blueprint('iteration', __name__)
 
 
 @iteration_bp.route("/iteration/<int:goal_id>", methods=["GET", "POST"])
+@require_login
 def iteration_view(goal_id):
     conn = get_db_connection()
     goal = conn.execute("SELECT * FROM goals WHERE id = ?", (goal_id,)).fetchone()
@@ -62,6 +64,7 @@ def iteration_view(goal_id):
 
 
 @iteration_bp.route('/iteration/<int:iteration_id>/history', methods=['GET'])
+@require_login
 def get_iteration_history(iteration_id):
     conn = get_db_connection()
     rows = conn.execute('''
@@ -74,6 +77,7 @@ def get_iteration_history(iteration_id):
 
 
 @iteration_bp.route('/goal/<int:goal_id>/history', methods=['GET'])
+@require_login
 def get_goal_history(goal_id):
     conn = get_db_connection()
     rows = conn.execute('''
@@ -87,6 +91,7 @@ def get_goal_history(goal_id):
 
 
 @iteration_bp.route('/iteration/<int:iteration_id>/status', methods=['POST'])
+@require_login
 def update_iteration_status(iteration_id):
     data = request.json
     status = data.get("status")

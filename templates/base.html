@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>{{ title if title else "Mindbaboon" }}</title>
 
   <!-- Adobe Fonts (replace xxxxxx with your Kit ID) -->
@@ -17,9 +18,26 @@
     <nav>
       <a href="{{ url_for('add_goal') }}">Add New Project</a> |
       <a href="{{ url_for('settings') }}">Settings</a>
+      {% if current_user %}
+        |
+        <form method="POST" action="{{ url_for('auth.logout') }}" class="inline-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="link-button" title="Signed in as {{ current_user.email }}">Logout</button>
+        </form>
+      {% endif %}
     </nav>
-    
+
   </header>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <ul class="flashes">
+        {% for category, message in messages %}
+          <li class="flash flash-{{ category }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
 
   <main class="main-content">
     {% block content %}{% endblock %}
@@ -28,9 +46,8 @@
   <footer>
     <p>© {{ current_year }} Mindbaboon | Version {{ version }}</p>
   </footer>
-  
+
   <script src="{{ url_for('static', filename='auto_resize.js') }}"></script>
 
 </body>
 </html>
-
