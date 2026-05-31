@@ -45,12 +45,17 @@
         
         
 
-        <!-- Delete form -->
-        <form method="POST" action="/delete_goal" class="delete-form">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <input type="hidden" name="goal_id" value="{{ goal['id'] }}" style="display:inline">
-          <button type="submit">delete</button>
-        </form>
+        <!-- Hover actions: iterate (only when a reminder is awaiting a response) + delete -->
+        <div class="goal-actions">
+          {% if goal.is_silenced == 1 and goal.completed == 0 %}
+            <a class="iterate-link" href="{{ url_for('iteration.iteration_view', goal_id=goal['id']) }}">iterate</a>
+          {% endif %}
+          <form method="POST" action="/delete_goal" class="delete-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="goal_id" value="{{ goal['id'] }}">
+            <button type="submit">delete</button>
+          </form>
+        </div>
       </li>
     {% endfor %}
   </ul>

@@ -177,6 +177,34 @@ th {
   opacity: 1;
 }
 
+/* Hover action row: iterate (left) + delete (right) */
+.goals li .goal-actions {
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+}
+
+/* "iterate" link — shown only when a reminder is awaiting a response,
+   styled like the delete button, revealed on hover like delete. */
+.goals li .iterate-link {
+  font-size: 2rem;
+  font-weight: 700;
+  text-decoration: underline;
+  color: var(--accent-color);
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.goals li:hover .iterate-link {
+  visibility: visible;
+  opacity: 1;
+}
+
+.goals li .iterate-link:hover {
+  color: var(--link-hover-color);
+}
+
 /* Overall page container */
 .add-goal-page {
   margin: 0 auto;
