@@ -47,7 +47,7 @@
 
         <!-- Hover actions: iterate (only when a reminder is awaiting a response) + delete -->
         <div class="goal-actions">
-          {% if goal.is_silenced == 1 and goal.completed == 0 %}
+          {% if goal.is_silenced == 1 and goal.completed != 1 %}
             <a class="iterate-link" href="{{ url_for('iteration.iteration_view', goal_id=goal['id']) }}">iterate</a>
           {% endif %}
           <form method="POST" action="/delete_goal" class="delete-form">

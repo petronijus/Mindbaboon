@@ -49,6 +49,12 @@ def initialize_database():
     if "is_paused" in cols and "is_silenced" not in cols:
         conn.execute("ALTER TABLE goals RENAME COLUMN is_paused TO is_silenced")
 
+    # Migration: `goals.completed` must be an integer flag (0/1). A legacy code
+    # path wrote the iteration answer ("yes"/"no") into it, which broke
+    # `completed == 0/1` comparisons (hidden "iterate" button, goal missing from
+    # the active API list). Normalize any non-1 value to 0 (active); keep 1.
+    conn.execute("UPDATE goals SET completed = CASE WHEN completed IN (1, '1') THEN 1 ELSE 0 END")
+
     conn.execute("""
         CREATE TABLE IF NOT EXISTS goal_history (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
