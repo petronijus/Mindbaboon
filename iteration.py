@@ -3,6 +3,7 @@ from flask import Blueprint, request, render_template, redirect, url_for, jsonif
 from datetime import datetime, timedelta
 from database import get_db_connection
 from auth import require_login
+from scheduler import remove_reminder, schedule_reminder
 import pytz
 import logging
 
@@ -29,10 +30,19 @@ def iteration_view(goal_id):
         next_steps = request.form.get("next_steps", goal["next_steps"])
         reward = request.form.get("reward", goal["reward"])
 
+        # The form lets the user change the cadence here too. Only accept a
+        # valid key; otherwise keep the stored value (so a malformed/missing
+        # field can't blank out the iteration). Persisted below, and the
+        # APScheduler job is rebuilt if it changed.
+        iteration = request.form.get("iteration", goal["iteration"])
+        if iteration not in ITERATION_INTERVALS:
+            iteration = goal["iteration"]
+        iteration_changed = iteration != goal["iteration"]
+
         # Informational only — APScheduler's interval trigger is the source of
         # truth for when the next reminder fires; we just record what we'd
         # expect for history purposes.
-        interval_args = ITERATION_INTERVALS.get(goal["iteration"]) or {"minutes": 2}
+        interval_args = ITERATION_INTERVALS.get(iteration) or {"minutes": 2}
         next_run = datetime.now(TIMEZONE) + timedelta(**interval_args)
 
         conn.execute("""
@@ -46,9 +56,9 @@ def iteration_view(goal_id):
         # form or the API /complete endpoint.
         conn.execute("""
             UPDATE goals
-            SET next_steps = ?, reward = ?, is_silenced = 0
+            SET next_steps = ?, reward = ?, iteration = ?, is_silenced = 0
             WHERE id = ?
-        """, (next_steps, reward, goal_id))
+        """, (next_steps, reward, iteration, goal_id))
 
         conn.execute("""
             INSERT INTO goal_history (goal_id, completed, was_done, next_steps, reward, timestamp)
@@ -57,6 +67,13 @@ def iteration_view(goal_id):
 
         conn.commit()
         conn.close()
+
+        # Rebuild the interval job so the new cadence takes effect. schedule_reminder
+        # is a no-op if the job already exists, so remove it first.
+        if iteration_changed:
+            remove_reminder(goal_id)
+            schedule_reminder(goal_id, iteration, send_confirmation=False)
+
         return redirect(url_for("index"))
 
     conn.close()
