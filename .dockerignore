@@ -9,3 +9,7 @@ logs/
 .coverage
 htmlcov/
 *.log
+private/
+scripts/
+.github/
+.release.yml

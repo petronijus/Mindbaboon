@@ -90,4 +90,5 @@ Goal create/update both require the **full six-field payload** (`goal_name`, `go
 - The Flask app is invoked as `python mindbaboon.py` (the gunicorn line in the Dockerfile is commented out). The compose `command` does `init_mindbaboon_db.py && python mindbaboon.py`. The Python entry point also calls `initialize_database()` itself, so direct `python mindbaboon.py` is safe too.
 - All DB writes go through `database.get_db_connection()`; no ORM. `PRAGMA foreign_keys = ON` is enabled on every connection. Schema lives in **one place**: `init_mindbaboon_db.py` (idempotent, includes column-rename migrations).
 - `SERVER_HOST` is what email reminder links point to — if unset or `0.0.0.0`, falls back to `socket.gethostbyname(socket.gethostname())`. Set it explicitly when deploying behind a reverse proxy.
-- Bump `VERSION` in `config.py` for any user-visible change — it's rendered in the footer of every template and shown in `/api/health`.
+- The version lives in the `VERSION` file (read by `config.py`); it's rendered in the footer of every template and shown in `/api/health`. Don't hand-edit it for releases — the `repo-release` flow bumps it from a `vX.Y.Z` tag.
+- Commits follow Conventional Commits (`feat:` / `fix:` / `chore:` / `docs:`) so `repo-release` can infer the bump level and group the changelog.

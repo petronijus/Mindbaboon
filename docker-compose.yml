@@ -1,5 +1,8 @@
 services:
   web:
+    # Prebuilt image (GHCR). `docker compose pull && up -d` uses it as-is;
+    # `docker compose up -d --build` rebuilds from the local Dockerfile instead.
+    image: ghcr.io/petronijus/mindbaboon:latest
     build: .
     restart: unless-stopped
     ports:

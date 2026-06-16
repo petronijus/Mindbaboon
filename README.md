@@ -42,8 +42,11 @@ service. The pieces:
    cp .env.example .env
    python -c "import secrets; print(secrets.token_hex(32))"  # paste into MINDBABOON_API_KEY
    ```
-2. On the Proxmox-hosted target, in the project directory:
+2. On the Proxmox-hosted target, in the project directory. Either pull the
+   prebuilt image from GHCR (recommended) or build from source:
    ```bash
+   docker compose -p mindbaboon pull && docker compose -p mindbaboon up -d   # prebuilt (ghcr.io/petronijus/mindbaboon)
+   # or, to build locally instead:
    docker compose -p mindbaboon up -d --build
    ```
    The `-p mindbaboon` is load-bearing — compose uses it to name the
@@ -192,9 +195,16 @@ FK `ON DELETE CASCADE` on `goal_history` and `iteration_history` is wired
 up — `get_db_connection()` enables `PRAGMA foreign_keys = ON`, so deleting
 a goal automatically removes its history rows.
 
+## Releases
+
+Tagging `vX.Y.Z` (via the `repo-release` flow) builds and pushes
+`ghcr.io/petronijus/mindbaboon:X.Y.Z` + `:latest` and cuts a GitHub release.
+The version is the `VERSION` file (also shown in the footer and `/api/health`).
+See [CHANGELOG.md](CHANGELOG.md).
+
 ## License
 
-Personal project, no license file. Ask before reusing.
+[MIT](LICENSE)
 
 ## Secrets
 

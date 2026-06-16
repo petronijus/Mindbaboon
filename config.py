@@ -1,4 +1,7 @@
-VERSION = "0.11.2"
+from pathlib import Path
+
+# Single source of truth for the version: the VERSION file (bumped by repo-release).
+VERSION = (Path(__file__).resolve().parent / "VERSION").read_text().strip()
 ITERATION_INTERVALS = {
     "week": {"weeks": 1},
     "2 weeks": {"weeks": 2},

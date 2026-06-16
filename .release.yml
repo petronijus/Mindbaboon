@@ -1,0 +1,13 @@
+name: mindbaboon
+tag_format: v{version}
+version_files:
+  - path: VERSION
+changelog: CHANGELOG.md
+artifacts:
+  mode: ci
+  ci_workflow: release.yml
+  expect_assets: []           # no file assets; the artifact is the GHCR image
+registry:
+  images:
+    - ghcr.io/petronijus/mindbaboon
+preflight_extra: []
