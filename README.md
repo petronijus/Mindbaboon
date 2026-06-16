@@ -195,3 +195,12 @@ a goal automatically removes its history rows.
 ## License
 
 Personal project, no license file. Ask before reusing.
+
+## Secrets
+
+`.env` is gitignored and kept SOPS-encrypted in the private overlay
+(`private/config/env.sops`) so it syncs across machines without plaintext in
+git. With the overlay cloned into `./private` and the 1Password CLI signed in,
+run `./scripts/secrets-decrypt.sh` to materialize `.env` (the age private key is
+fetched from 1Password), or `./scripts/secrets-edit.sh` to change it.
+Prereqs: `brew install sops age`.

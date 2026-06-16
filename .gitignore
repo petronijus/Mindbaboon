@@ -6,3 +6,6 @@ data/mindbaboon.db
 *.db
 .DS_Store
 .claude/
+
+# Private overlay (clone of github.com/petronijus/Mindbaboon-private)
+/private/
