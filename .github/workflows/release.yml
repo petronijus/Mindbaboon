@@ -1,44 +1,29 @@
 name: release
 
+# The image is built and pushed to GHCR LOCALLY (scripts/build-push.sh), not in
+# CI. On a version tag this workflow only (a) validates the Docker build and
+# (b) creates the GitHub release with generated notes.
+
 on:
   push:
     tags: ['v*']
 
 permissions:
   contents: write     # create the GitHub release
-  packages: write     # push to GHCR
 
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: docker/setup-buildx-action@v3
 
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Image metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/mindbaboon
-          tags: |
-            type=semver,pattern={{version}}
-            type=raw,value=latest
-
-      - name: Build and push
+      - name: Build image (validation only — publish is local via scripts/build-push.sh)
         uses: docker/build-push-action@v6
         with:
           context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          push: false
 
       - name: Create GitHub release
         env:

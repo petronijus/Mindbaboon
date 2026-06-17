@@ -4,9 +4,9 @@ version_files:
   - path: VERSION
 changelog: CHANGELOG.md
 artifacts:
-  mode: ci
-  ci_workflow: release.yml
-  expect_assets: []           # no file assets; the artifact is the GHCR image
+  mode: local                 # image is built + pushed LOCALLY (not in CI)
+  local_build: ./scripts/build-push.sh   # docker build + push to GHCR
+  local_upload: []            # artifact is the GHCR image, not a release file
 registry:
   images:
     - ghcr.io/petronijus/mindbaboon

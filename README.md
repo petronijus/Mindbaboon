@@ -197,9 +197,17 @@ a goal automatically removes its history rows.
 
 ## Releases
 
-Tagging `vX.Y.Z` (via the `repo-release` flow) builds and pushes
-`ghcr.io/petronijus/mindbaboon:X.Y.Z` + `:latest` and cuts a GitHub release.
-The version is the `VERSION` file (also shown in the footer and `/api/health`).
+The image is **built and pushed to GHCR locally** (not in CI):
+
+```bash
+echo "$GHCR_PAT" | docker login ghcr.io -u petronijus --password-stdin   # PAT: write:packages
+scripts/build-push.sh        # builds + pushes ghcr.io/petronijus/mindbaboon:{VERSION,latest}
+```
+
+Tagging `vX.Y.Z` (via the `repo-release` flow) then only validates the Docker
+build in CI and cuts a GitHub release with notes — it does **not** publish the
+image. The version is the `VERSION` file (also in the footer and `/api/health`).
+Deploy pulls the prebuilt image (`docker compose -p mindbaboon pull && up -d`).
 See [CHANGELOG.md](CHANGELOG.md).
 
 ## License
