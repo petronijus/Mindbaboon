@@ -35,3 +35,5 @@ EXPOSE 5000
 # Command to run the application
 #CMD ["gunicorn", "-w", "1", "-b", "0.0.0.0:5000", "mindbaboon:app", "--log-level", "debug", "--access-logfile", "-", "--error-logfile", "-"]
 #CMD ["python", "mindbaboon.py"]
+# Link this GHCR package to its source repo (auto-connects on push)
+LABEL org.opencontainers.image.source=https://github.com/petronijus/Mindbaboon
