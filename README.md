@@ -222,3 +222,9 @@ git. With the overlay cloned into `./private` and the 1Password CLI signed in,
 run `./scripts/secrets-decrypt.sh` to materialize `.env` (the age private key is
 fetched from 1Password), or `./scripts/secrets-edit.sh` to change it.
 Prereqs: `brew install sops age`.
+
+> **Do not edit `.env` by hand to make a change stick.** It is a generated
+> artifact — the next `secrets-decrypt.sh` overwrites it from `env.sops`. To
+> change any value (e.g. `SERVER_HOST`), run `secrets-edit.sh`, commit the
+> updated `private/config/env.sops`, then on the host re-run
+> `secrets-decrypt.sh` and `docker compose -p mindbaboon up -d` to apply it.
