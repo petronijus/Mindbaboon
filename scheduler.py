@@ -41,10 +41,15 @@ def _build_scheduler():
 scheduler = _build_scheduler()
 
 load_dotenv()
-EMAIL_SMTP_SERVER = os.getenv("EMAIL_SMTP_SERVER", "smtp.gmail.com")
+EMAIL_SMTP_SERVER = os.getenv("EMAIL_SMTP_SERVER", "smtp.resend.com")
 EMAIL_SMTP_PORT = int(os.getenv("EMAIL_SMTP_PORT", 587))
 EMAIL_USERNAME = os.getenv("EMAIL_USERNAME")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
+# The login and the sender are two different things on a transactional relay:
+# Resend authenticates as the literal user "resend", so reusing the username as
+# the From header would put "resend" in the envelope. Falls back to the username
+# so a plain user@host SMTP setup keeps working unchanged.
+EMAIL_FROM = os.getenv("EMAIL_FROM") or EMAIL_USERNAME
 
 
 def get_server_host():
@@ -112,7 +117,7 @@ def render_email(email_type, context):
 def send_email(email_type, to_address, context):
     subject, body = render_email(email_type, context)
     msg = EmailMessage()
-    msg["From"] = EMAIL_USERNAME
+    msg["From"] = EMAIL_FROM
     msg["To"] = to_address
     msg["Subject"] = subject
     msg.set_content(body, subtype='html')

@@ -163,7 +163,8 @@ goals, mark iterations done, snooze, and query state. Setup is in
 
 | Var | Purpose |
 |---|---|
-| `EMAIL_SMTP_SERVER`, `EMAIL_SMTP_PORT`, `EMAIL_USERNAME`, `EMAIL_PASSWORD` | SMTP for outbound mail |
+| `EMAIL_SMTP_SERVER`, `EMAIL_SMTP_PORT`, `EMAIL_USERNAME`, `EMAIL_PASSWORD` | SMTP for outbound mail — defaults to the Resend relay, where the username is the literal `resend` and the password is the API key |
+| `EMAIL_FROM` | Sender address. Required on a relay like Resend (the login isn't an address) and must sit on a verified domain; falls back to `EMAIL_USERNAME` |
 | `DEFAULT_TO_ADDRESS` | Who receives reminders |
 | `SERVER_HOST` | Hostname used in email reminder links |
 | `MINDBABOON_API_KEY` | Required to call `/api/...` (except `/health`) |
