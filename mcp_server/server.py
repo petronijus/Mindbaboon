@@ -14,12 +14,12 @@ import json
 from typing import Any
 
 import httpx
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 
 BASE_URL = os.getenv("MINDBABOON_URL", "http://localhost:5000").rstrip("/")
 API_KEY = os.getenv("MINDBABOON_API_KEY", "")
 
-mcp = FastMCP("mindbaboon")
+mcp = MCPServer("mindbaboon")
 
 
 def _client() -> httpx.Client:
@@ -221,4 +221,4 @@ def goal_history(goal_id: int) -> Any:
 if __name__ == "__main__":
     if not API_KEY:
         raise SystemExit("MINDBABOON_API_KEY is required")
-    mcp.run()
+    mcp.run(transport="stdio")
