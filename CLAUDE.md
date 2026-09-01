@@ -10,7 +10,7 @@ Goal tracker with iteration-based email reminders. Flask + SQLite + APScheduler,
 
 Local (no container):
 ```bash
-pip install -r requirements.txt
+pip install --require-hashes -r requirements.lock   # lockfile, not the loose requirements.txt
 cp .env.example .env   # then fill SMTP creds + MINDBABOON_API_KEY
 python init_mindbaboon_db.py
 python mindbaboon.py            # serves on 0.0.0.0:5000
@@ -31,6 +31,8 @@ Look for `scheduler_running: true` and each `jobs[].next_run_time` in the future
 
 There is no test suite, no lint config, no build step beyond the Docker image.
 
+Dependencies: `requirements.txt` and `mcp_server/requirements.txt` are the human-edited intent (floors + upper bounds); `requirements.lock` and `mcp_server/requirements.lock` are the hash-pinned resolve the Dockerfile and any local install use. After editing a requirements file run `scripts/deps-lock.sh` (uv, resolves for Python 3.11) and commit both. Never hand-edit a `.lock`.
+
 ## Architecture
 
 Single Flask app, three blueprints, one APScheduler instance shared across them. Everything persists in one SQLite file (`data/mindbaboon.db` locally, `/app/data/mindbaboon.db` in container) — including the APScheduler job store.
@@ -50,7 +52,7 @@ Single Flask app, three blueprints, one APScheduler instance shared across them.
 
 There is one APScheduler `interval` job per active goal, id `goal_{goal_id}`. Two pieces of state interact:
 
-1. **Per-goal cadence** — `ITERATION_INTERVALS` in `config.py` (`week` / `2 weeks` / `month`) maps to `timedelta(**args)`; the keys are passed directly to `timedelta`. **Currently set to real cadences (weeks=1/2/4); historic comments still reference short-for-testing values — verify before changing.**
+1. **Per-goal cadence** — `ITERATION_INTERVALS` in `config.py` (`week` / `2 weeks` / `month`) maps to `timedelta(**args)`; the keys are passed directly to `timedelta`. Set to real cadences (weeks=1/2/4).
 2. **Global iteration slot** — `weekday + hour + minute` stored in the `settings` table (`get_iteration_slot()`). `next_iteration_slot()` rounds the first fire to the next occurrence of that window; subsequent fires drift by the cadence interval. Changing the slot via `/settings` calls `reschedule_all_active()`, which tears down and re-creates every job.
 
 When a reminder fires (`send_goal_reminder`), the goal is **automatically set `is_silenced = 1`**. This is the key bit of the design: the APScheduler job keeps ticking on real-world cadence (so the clock doesn't reset when you respond), but the handler skips sending email until the flag is cleared. Cleared by: user responding via `/iteration/<id>` (form POST), or by `/api/.../resume`. A reminder email fired into a silenced goal is just a no-op — no email, scheduler advances to the next slot.

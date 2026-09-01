@@ -9,6 +9,11 @@ The single source of truth for the version is `VERSION` in `config.py`.
 ## [Unreleased]
 
 ### Changed
+- Python dependencies are now installed from hash-pinned lockfiles
+  (`requirements.lock`, `mcp_server/requirements.lock`, regenerated with
+  `scripts/deps-lock.sh`); the Dockerfile uses `pip install --require-hashes`.
+  The loose `requirements.txt` files remain the human-edited intent.
+- Dropped the unused `requests` dependency.
 - MCP server migrated to `mcp` SDK 2.x (`mcp.server.mcpserver.MCPServer`);
   the 1.x `mcp.server.fastmcp.FastMCP` module no longer exists in 2.0+, so a
   fresh `pip install` of `mcp_server/requirements.txt` had been failing to

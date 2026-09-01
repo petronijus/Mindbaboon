@@ -153,6 +153,34 @@ curl http://<proxmox-host>:5000/api/health
 # scheduler_running: true, jobs[] with future next_run_time, pid + hostname
 ```
 
+## Dependencies
+
+Python dependencies are declared twice, on purpose:
+
+| File | Role |
+|---|---|
+| `requirements.txt`, `mcp_server/requirements.txt` | Intent — floors and upper bounds a human edits |
+| `requirements.lock`, `mcp_server/requirements.lock` | Exact, hash-pinned resolve that actually gets installed |
+
+The Docker image installs with `pip install --require-hashes -r requirements.lock`,
+so a build resolves to the same packages that were last tested instead of
+whatever PyPI serves that day (an unbounded `mcp>=1.0.0` floor once let a fresh
+build pull mcp 2.0, which had removed the module the MCP server imported).
+
+To change a dependency, edit the requirements file, then regenerate and commit
+both lockfiles:
+
+```bash
+scripts/deps-lock.sh   # needs uv; resolves for Python 3.11 with --generate-hashes
+```
+
+Installing outside Docker works the same way:
+
+```bash
+pip install --require-hashes -r requirements.lock
+pip install --require-hashes -r mcp_server/requirements.lock   # MCP server only
+```
+
 ## MCP server
 
 `mcp_server/` exposes the REST API as MCP tools so an LLM can create
