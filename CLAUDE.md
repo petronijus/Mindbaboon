@@ -44,7 +44,7 @@ Single Flask app, three blueprints, one APScheduler instance shared across them.
 | `database.py` | Thin SQLite helpers + `settings` key/value table accessors (`get_iteration_slot`, etc.) |
 | `init_mindbaboon_db.py` | Idempotent schema bootstrap; run on container build and on every container start (compose `command`) |
 | `config.py` | `VERSION`, `ITERATION_INTERVALS`, `DEFAULT_ITERATION_SLOT`, motivational quotes |
-| `mcp_server/server.py` | FastMCP stdio server wrapping the REST API for Claude Code |
+| `mcp_server/server.py` | MCP stdio server (`mcp` SDK 2.x `MCPServer`) wrapping the REST API for Claude Code |
 
 ### Scheduling model — the one non-obvious bit
 

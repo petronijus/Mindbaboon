@@ -8,6 +8,12 @@ The single source of truth for the version is `VERSION` in `config.py`.
 
 ## [Unreleased]
 
+### Changed
+- MCP server migrated to `mcp` SDK 2.x (`mcp.server.mcpserver.MCPServer`);
+  the 1.x `mcp.server.fastmcp.FastMCP` module no longer exists in 2.0+, so a
+  fresh `pip install` of `mcp_server/requirements.txt` had been failing to
+  import. Dependency is now bounded to `mcp>=2.0.0,<3`.
+
 ## [0.11.2]
 
 First public release.
