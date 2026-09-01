@@ -17,11 +17,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tzdata \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first to leverage Docker cache
-COPY requirements.txt .
+# Copy the dependency manifests first to leverage Docker cache. The image is
+# installed from the hash-pinned lockfile, never from the loose requirements.txt
+# floors, so every build resolves to exactly what was last tested. Regenerate
+# with scripts/deps-lock.sh after editing requirements.txt.
+COPY requirements.txt requirements.lock ./
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Python dependencies (fails closed on any hash or version mismatch)
+RUN pip install --no-cache-dir --require-hashes -r requirements.lock
 
 # Copy application code
 COPY . .
