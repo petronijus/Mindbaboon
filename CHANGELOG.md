@@ -8,15 +8,24 @@ The single source of truth for the version is `VERSION` in `config.py`.
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-09-30
+
+### Added
+- `EMAIL_FROM` sets the reminder sender separately from the SMTP login, so
+  mail can go through a transactional relay such as Resend (it logs in as
+  `resend` and needs a `From` on a verified domain). Unset, it falls back to
+  `EMAIL_USERNAME`, so a plain SMTP setup keeps working unchanged.
+
 ### Changed
 - Python dependencies are now installed from hash-pinned lockfiles
   (`requirements.lock`, `mcp_server/requirements.lock`, regenerated with
   `scripts/deps-lock.sh`); the Dockerfile uses `pip install --require-hashes`.
   The loose `requirements.txt` files remain the human-edited intent.
-- MCP server migrated to `mcp` SDK 2.x (`mcp.server.mcpserver.MCPServer`);
-  the 1.x `mcp.server.fastmcp.FastMCP` module no longer exists in 2.0+, so a
-  fresh `pip install` of `mcp_server/requirements.txt` had been failing to
-  import. Dependency is now bounded to `mcp>=2.0.0,<3`.
+- MCP server migrated to `mcp` SDK 2.x (`MCPServer`); the 1.x `FastMCP`
+  module no longer exists in 2.0+, so a fresh install had been failing to
+  import. Bounded to `mcp>=2.0.0,<3`.
+- MCP server dependencies refreshed to the latest patches (`sse-starlette`
+  3.4.11).
 
 ## [0.11.2]
 
