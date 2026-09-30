@@ -5,6 +5,8 @@ SQLAlchemy>=2.0.0
 gunicorn
 pytz
 Authlib>=1.3
+# Authlib's Flask client (auth.py) imports requests but does not declare it.
+requests>=2.31
 Flask-WTF>=1.2
 Flask-Talisman>=1.1
 Flask-Limiter>=3.5
